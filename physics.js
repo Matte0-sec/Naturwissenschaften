@@ -4,76 +4,1240 @@
   const context = canvas.getContext("2d");
   const chart = $("#chartCanvas");
   const chartContext = chart.getContext("2d");
+
   const experimentList = [
     ["accelerator", "Teilchenbeschleuniger", "Moderne Physik", "Teilchen werden durch ein Magnetfeld auf Kreisbahnen gelenkt.", "Erhöhe die Spannung: Wie ändert sich die Teilchenenergie?", [["spannung", "Beschleunigungsspannung", 10, 400, 160, "kV"], ["feld", "Magnetfeld", 0.1, 2.5, 1, "T"]]],
+
     ["electricity", "Elektrizität", "Elektrizität", "Ohmsches Gesetz, elektrische Leistung und ein steuerbarer Kurzschluss.", "Was passiert bei halbiertem Widerstand?", [["spannung", "Batteriespannung", 1, 24, 12, "V"], ["widerstand", "Widerstand", 1, 100, 20, "Ω"], ["kurz", "Kurzschluss", 0, 1, 0, "aus"]]],
+
     ["magnetism", "Elektromagnet", "Magnetismus", "Eine Spule erzeugt ein Magnetfeld. Seine Stärke hängt von Strom und Windungen ab.", "Wie verdoppelt sich das Feld bei doppelter Windungszahl?", [["strom", "Stromstärke", 0, 10, 3, "A"], ["windungen", "Spulenanzahl", 10, 300, 100, ""], ["abstand", "Eisenabstand", 1, 20, 8, "cm"]]],
-    ["gravity", "Orbitale Gravitation", "Gravitation", "Eine numerische Bahnrechnung nach Newton: $F = GmM/r²$.", "Welche Anfangsgeschwindigkeit führt zu einer stabilen Umlaufbahn?", [["masse", "Planetenmasse", 0.5, 3, 1, "M⊕"], ["abstand", "Startabstand", 1.2, 4, 2, "R⊕"], ["geschwindigkeit", "Startgeschwindigkeit", 3, 13, 7.9, "km/s"]]],
+
+    ["gravity", "Orbitale Gravitation", "Astronomie", "Eine numerische Bahnrechnung nach Newton: $F = GmM/r²$.", "Welche Anfangsgeschwindigkeit führt zu einer stabilen Umlaufbahn?", [["masse", "Planetenmasse", 0.5, 3, 1, "M⊕"], ["abstand", "Startabstand", 1.2, 4, 2, "R⊕"], ["geschwindigkeit", "Startgeschwindigkeit", 3, 13, 7.9, "km/s"]]],
+
     ["rocket", "Raketenstart", "Mechanik", "Schub, Gewichtskraft, Luftwiderstand und abnehmende Treibstoffmasse bestimmen den Flug.", "Reicht der Schub zum Abheben?", [["schub", "Schub", 100, 1200, 500, "kN"], ["masse", "Startmasse", 20, 150, 60, "t"], ["treibstoff", "Treibstoff", 5, 100, 35, "t"]]],
+
     ["drag", "Luftwiderstand", "Mechanik", "Der Luftwiderstand wächst quadratisch mit der Geschwindigkeit: $Fₐ = ½ρcᵥAv²$.", "Welche Form erreicht die höhere Endgeschwindigkeit?", [["masse", "Masse", 0.1, 20, 2, "kg"], ["form", "Luftwiderstand cᵥ", 0.1, 1.4, 0.8, ""], ["flaeche", "Fläche", 0.01, 1, 0.25, "m²"]]],
+
     ["waves", "Wasserwellen", "Wellen", "Zwei harmonische Wellen überlagern sich. Ein Rand reflektiert die Welle.", "Wo entsteht konstruktive Interferenz?", [["frequenz", "Frequenz", 0.2, 4, 1.2, "Hz"], ["amplitude", "Amplitude", 5, 60, 28, "px"], ["geschwindigkeit", "Wellengeschwindigkeit", 1, 12, 5, "m/s"]]],
+
     ["heat", "Wärmeübertragung", "Thermodynamik", "Wärme fließt vom warmen zum kalten Körper, bis beide die gleiche Temperatur haben.", "Wie wirkt eine größere Temperaturdifferenz?", [["heiss", "Warmer Körper", 30, 150, 100, "°C"], ["kalt", "Kalter Körper", -10, 50, 15, "°C"], ["leitung", "Wärmeleitung", 0.1, 3, 1, "W/K"]]],
+
     ["collision", "Kollisionen", "Mechanik", "Impuls bleibt erhalten. Der Stoßfaktor bestimmt, wie elastisch die Kugeln kollidieren.", "Wie unterscheiden sich elastischer und unelastischer Stoß?", [["masse1", "Masse Kugel A", 1, 10, 3, "kg"], ["masse2", "Masse Kugel B", 1, 10, 5, "kg"], ["tempo1", "Geschwindigkeit A", 0.5, 12, 5, "m/s"], ["tempo2", "Geschwindigkeit B", -8, -0.5, -2, "m/s"], ["elastizitaet", "Stoßfaktor", 0, 1, 0.85, ""]]],
+
     ["pendulum", "Doppelpendel", "Chaotische Systeme", "Zwei gekoppelte Pendel folgen nichtlinearer Bewegung. Kleine Änderungen können große Folgen haben.", "Was ändert ein kleiner anderer Startwinkel?", [["winkel", "Anfangswinkel", 5, 170, 120, "°"], ["gravitation", "Gravitation", 1, 20, 9.81, "m/s²"], ["spur", "Spurlänge", 20, 250, 120, ""]]],
-    ["blackhole", "Schwarzes Loch", "Astrophysik", "Vereinfachtes Newton-Modell: Es zeigt starke Gravitation, keine vollständige Relativitätstheorie.", "Welche Bahn wird bei höherer Masse stärker gekrümmt?", [["masse", "Masse", 1, 20, 6, "M☉"], ["abstand", "Startabstand", 40, 180, 120, "px"], ["geschwindigkeit", "Startgeschwindigkeit", 1, 12, 6, "km/s"]]],
+
+    ["blackhole", "Schwarzes Loch", "Astronomie", "Vereinfachtes Newton-Modell: Es zeigt starke Gravitation, keine vollständige Relativitätstheorie.", "Welche Bahn wird bei höherer Masse stärker gekrümmt?", [["masse", "Masse", 1, 20, 6, "M☉"], ["abstand", "Startabstand", 40, 180, 120, "px"], ["geschwindigkeit", "Startgeschwindigkeit", 1, 12, 6, "km/s"]]],
+
     ["optics", "Optik-Labor", "Optik", "Lichtstrahlen werden am Spiegel reflektiert und an einer Sammellinse gebrochen.", "Wo liegt der Brennpunkt bei kleinerer Brennweite?", [["brennweite", "Brennweite", 40, 240, 120, "mm"], ["winkel", "Laserwinkel", -20, 20, 0, "°"], ["modus", "Linse / Spiegel", 0, 1, 0, "Linse"]]],
-    ["projectile", "Projektilbewegung", "Mechanik", "Ohne Luftwiderstand ist die Flugbahn eine Parabel. Schwerkraft wirkt konstant nach unten.", "Bei welchem Winkel ist die Reichweite maximal?", [["winkel", "Abschusswinkel", 5, 85, 45, "°"], ["tempo", "Startgeschwindigkeit", 5, 100, 45, "m/s"], ["gravitation", "Gravitation", 1, 20, 9.81, "m/s²"]]],
+
+    ["projectile", "Projektilbewegung", "Mechanik", "Ohne Luftwiderstand ist die Flugbahn eine Parabel. Schwerkraft wirkt konstant nach unten.", "Bei welchem Winkel ist die Reichweite maximal?", [["winkel", "Abschusswinkel", 5, 85, 45, "°"], ["tempo", "Startgeschwindigkeit", 5, 100, 45, "m/s"], ["gravitation", "Gravitation", 1, 20, 9.81, "m/s²"]]]
   ];
-  const experiments = Object.fromEntries(experimentList.map(([id, title, category, description, challenge, controls]) => [id, { id, title, category, description, challenge, controls }]));
+
+  const experiments = Object.fromEntries(
+    experimentList.map(([id, title, category, description, challenge, controls]) => [
+      id,
+      { id, title, category, description, challenge, controls }
+    ])
+  );
+
   const explanations = {
     accelerator: "Die Spannung beschleunigt geladene Teilchen. Das Magnetfeld lenkt sie quer zur Bewegungsrichtung ab und krümmt ihre Bahn. Mehr Spannung erhöht die Energie, ein stärkeres Feld erzeugt einen kleineren Bahnradius.",
+
     electricity: "Die Batterie erzeugt Spannung. Bei geschlossenem Stromkreis gilt das Ohmsche Gesetz: Stromstärke = Spannung geteilt durch Widerstand. Beim Kurzschluss wird der Widerstand fast umgangen, daher steigt der Strom stark an.",
+
     magnetism: "Strom durch die Spule erzeugt ein Magnetfeld. Mehr Strom oder mehr Windungen verstärken es. Das Eisenobjekt wird magnetisiert und zum stärkeren Magnetfeld gezogen.",
+
     gravity: "Die Schwerkraft zieht das Objekt fortlaufend zum Planeten. Eine passende seitliche Geschwindigkeit führt zur Umlaufbahn; ist sie zu klein, fällt das Objekt ab, und ist sie zu groß, kann es entkommen.",
+
     rocket: "Der Schub beschleunigt die Rakete nach oben. Gewichtskraft und Luftwiderstand wirken entgegen. Während Treibstoff verbraucht wird, sinkt die Masse und derselbe Schub beschleunigt die Rakete stärker.",
+
     drag: "Beim Fallen erhöht die Schwerkraft die Geschwindigkeit. Der Luftwiderstand wächst mit dem Quadrat der Geschwindigkeit. Sobald Luftwiderstand und Gewichtskraft gleich groß sind, entsteht die Endgeschwindigkeit.",
+
     waves: "Die zwei Quellen erzeugen Wellen, die sich überlagern. Wellenberge verstärken sich gegenseitig, Berg und Tal schwächen sich ab. Die Frequenz bestimmt die Zahl der Schwingungen pro Sekunde.",
+
     heat: "Durch Teilchenstöße fließt Wärme vom warmen zum kalten Körper. Eine größere Temperaturdifferenz und bessere Wärmeleitung beschleunigen diesen Austausch, bis sich die Temperaturen annähern.",
+
     collision: "Der Gesamtimpuls bleibt beim Stoß erhalten. Bei einem elastischen Stoß bleibt auch die Bewegungsenergie fast erhalten. Bei einem unelastischen Stoß geht ein Teil in Wärme und Verformung über.",
+
     pendulum: "Die beiden Pendel beeinflussen sich gegenseitig und folgen nichtlinearen Gleichungen. Dadurch können kleinste Unterschiede im Startwinkel später deutlich verschiedene Bewegungen erzeugen.",
+
     blackhole: "Dieses vereinfachte Newton-Modell berechnet die stärker werdende Anziehung nahe dem Schwarzen Loch und krümmt damit die Bahn. Relativistische Effekte wie Zeitdilatation sind nicht vollständig enthalten.",
+
     optics: "Am Spiegel gilt Einfallswinkel gleich Ausfallswinkel. Eine Sammellinse bricht parallele Strahlen zum Brennpunkt. Eine kleinere Brennweite legt den Brennpunkt näher an die Linse.",
-    projectile: "Horizontal bleibt die Geschwindigkeit ohne Luftwiderstand konstant, vertikal beschleunigt die Schwerkraft nach unten. Zusammen entsteht eine Parabel; nahe 45 Grad ist die Reichweite am größten.",
+
+    projectile: "Horizontal bleibt die Geschwindigkeit ohne Luftwiderstand konstant, vertikal beschleunigt die Schwerkraft nach unten. Zusammen entsteht eine Parabel; nahe 45 Grad ist die Reichweite am größten."
   };
-  let selected; let values = {}; let running = false; let time = 0; let history = []; let animationId; let state = {}; let difficulty = "Grundlagen";
+
+  let selected;
+  let values = {};
+  let running = false;
+  let time = 0;
+  let history = [];
+  let animationId;
+  let state = {};
+  let difficulty = "Grundlagen";
+
   const color = "#167a76";
 
-  function controlMarkup([key, label, min, max, value, unit]) { return `<label class="parameter"><span>${label}<b id="value-${key}">${value} ${unit}</b></span><input data-key="${key}" type="range" min="${min}" max="${max}" value="${value}" step="${(max - min) / 100}" /></label>`; }
-  function open(id) { selected = experiments[id]; values = Object.fromEntries(selected.controls.map(([key,,,, value]) => [key, value])); time = 0; history = []; state = initialState(id); running = false; window.physics3d?.select(id, values); $("#simulationEmpty").hidden = true; $("#simulationPanel").hidden = false; $("#simCategory").textContent = selected.category; $("#simTitle").textContent = selected.title; $("#simDescription").textContent = selected.description; $("#simChallenge").textContent = selected.challenge; $("#parameterControls").innerHTML = selected.controls.map(controlMarkup).join(""); $("#measurements").innerHTML = ""; document.querySelectorAll(".experiment-card").forEach((card) => card.classList.toggle("active", card.dataset.id === id)); document.querySelectorAll("[data-key]").forEach((input) => input.addEventListener("input", () => { values[input.dataset.key] = Number(input.value); window.physics3d?.update(values); const definition = selected.controls.find(([key]) => key === input.dataset.key); $(`#value-${input.dataset.key}`).textContent = `${Number(input.value).toFixed(definition[4] % 1 ? 2 : 0)} ${definition[5]}`; if (["gravity", "pendulum", "blackhole", "projectile", "collision", "rocket", "drag"].includes(id)) state = initialState(id); render(); })); render(); }
-  function initialState(id) { $("#simExplanation").textContent = explanations[id]; if (id === "gravity") return { x: values.abstand, y: 0, vx: 0, vy: values.geschwindigkeit, trail: [] }; if (id === "rocket") return { h: 0, v: 0, fuel: Math.min(values.treibstoff, values.masse * .85) * 1000 }; if (id === "drag") return { y: 30, v: 0 }; if (id === "collision") return { x1: 120, x2: 610, v1: values.tempo1, v2: values.tempo2, collided: false }; if (id === "pendulum") return { a1: values.winkel * Math.PI / 180, a2: values.winkel * Math.PI / 180 + .03, w1: 0, w2: 0, trail: [] }; if (id === "blackhole") return { x: values.abstand, y: -45, vx: 0, vy: values.geschwindigkeit * .75, trail: [] }; if (id === "projectile") return { x: 45, y: 370, vx: values.tempo * Math.cos(values.winkel * Math.PI / 180), vy: -values.tempo * Math.sin(values.winkel * Math.PI / 180), maxY: 0 }; if (id === "heat") return { hot: values.heiss, cold: values.kalt }; return {}; }
-  function step(dt) { if (!running || !selected) return; time += dt; const s = state; const id = selected.id;
-    if (id === "gravity") { const seconds = dt * 90; const radiusKm = Math.hypot(s.x, s.y) * 6371; if (radiusKm <= 6371) { s.vx = 0; s.vy = 0; } else { const a = 398600.4418 * values.masse / (radiusKm * radiusKm); s.vx += -a * s.x / Math.hypot(s.x, s.y) * seconds; s.vy += -a * s.y / Math.hypot(s.x, s.y) * seconds; s.x += s.vx * seconds / 6371; s.y += s.vy * seconds / 6371; s.trail.push([s.x, s.y]); } }
-    if (id === "rocket") { const dryMass = Math.max(1000, values.masse * 1000 - Math.min(values.treibstoff, values.masse * .85) * 1000); const mass = dryMass + s.fuel; const thrust = s.fuel > 0 ? values.schub * 1000 : 0; const density = 1.225 * Math.exp(-Math.max(0, s.h) / 8500); const drag = .5 * density * .5 * 10 * s.v * Math.abs(s.v); const a = (thrust - mass * 9.80665 - drag) / mass; s.v += a * dt; s.h += s.v * dt; if (s.h <= 0 && s.v < 0) { s.h = 0; s.v = 0; } s.fuel = Math.max(0, s.fuel - thrust / (300 * 9.80665) * dt); }
-    if (id === "drag") { if (s.y < 380) { const a = (values.masse * 9.81 - .5 * 1.225 * values.form * values.flaeche * s.v * Math.abs(s.v)) / values.masse; s.v += a * dt; s.y = Math.min(380, s.y + s.v * dt * 8); } else { s.v = 0; } }
-    if (id === "collision") { s.x1 += s.v1 * dt * 28; s.x2 += s.v2 * dt * 28; if (!s.collided && s.x1 + 32 >= s.x2 - 32 && s.v1 > s.v2) { const e = values.elastizitaet; const u1 = s.v1; const u2 = s.v2; s.v1 = (values.masse1 * u1 + values.masse2 * u2 - values.masse2 * e * (u1 - u2)) / (values.masse1 + values.masse2); s.v2 = (values.masse1 * u1 + values.masse2 * u2 + values.masse1 * e * (u1 - u2)) / (values.masse1 + values.masse2); s.collided = true; } }
-    if (id === "heat") { const flow = values.leitung * (s.hot - s.cold) / 120; s.hot -= flow * dt; s.cold += flow * dt; }
-    if (id === "projectile" && !(s.y >= 370 && s.vy > 0)) { s.vy += values.gravitation * dt; s.x += s.vx * dt * 5; s.y += s.vy * dt * 5; s.maxY = Math.max(s.maxY, 370 - s.y); if (s.y >= 370 && s.vy > 0) { s.y = 370; s.vx = 0; s.vy = 0; } }
-    if (id === "blackhole") { const r = Math.hypot(s.x, s.y); const a = values.masse * 950 / (r * r); s.vx += -a * s.x / r * dt; s.vy += -a * s.y / r * dt; s.x += s.vx * dt * 4; s.y += s.vy * dt * 4; s.trail.push([s.x, s.y]); }
-    if (id === "pendulum") { const g = values.gravitation; const d = s.a2 - s.a1; const den = 2 - Math.cos(d) ** 2; const a1 = (Math.sin(d) * (s.w2 ** 2 + s.w1 ** 2 * Math.cos(d)) + 2 * g * Math.sin(s.a2) * Math.cos(d) - 2 * g * Math.sin(s.a1)) / den; const a2 = (-Math.sin(d) * (s.w2 ** 2 + s.w1 ** 2 * Math.cos(d)) + 2 * g * Math.sin(s.a1) * Math.cos(d) - 2 * g * Math.sin(s.a2)) / den; s.w1 += a1 * dt; s.w2 += a2 * dt; s.a1 += s.w1 * dt; s.a2 += s.w2 * dt; }
-    history.push(metric()); if (history.length > 100) history.shift(); render(); }
-  function acceleratorValues() { const energyJ = values.spannung * 1000 * 1.602176634e-19; const protonMass = 1.67262192369e-27; const speed = Math.sqrt(2 * energyJ / protonMass); return { energyKeV: values.spannung, speed, radius: protonMass * speed / (1.602176634e-19 * values.feld) }; }
-  function metric() { const s = state; const id = selected.id; if (id === "electricity") return values.spannung / (values.kurz ? .08 : values.widerstand + .4); if (id === "magnetism") return 1.256e-6 * values.windungen * values.strom / .1 * 1000; if (id === "waves") return values.amplitude; if (id === "accelerator") return acceleratorValues().speed; if (id === "gravity") return Math.hypot(s.vx, s.vy); if (id === "rocket" || id === "drag") return s.v; if (id === "heat") return s.hot; if (id === "collision") return s.v1; if (id === "pendulum") return s.a2; if (id === "blackhole") return Math.hypot(s.vx, s.vy); if (id === "projectile") return s.maxY; return 0; }
-  function measurement(label, value, unit) { return `<div class="measurement"><span>${label}</span><b>${Number(value).toFixed(2)} <small>${unit}</small></b></div>`; }
-  function render() { if (!selected) return; context.clearRect(0, 0, 760, 420); context.fillStyle = "#0d2227"; context.fillRect(0, 0, 760, 420); const id = selected.id; let measures = []; context.lineWidth = 2;
-    if (id === "electricity") { const current = metric(); circuit(); measures = [measurement("Spannung", values.spannung, "V"), measurement("Stromstärke", current, "A"), measurement("Leistung", values.spannung * current, "W")]; }
-    else if (id === "magnetism") { const field = metric(); context.strokeStyle = "#63d6ce"; for (let i = -5; i <= 5; i++) { context.beginPath(); context.ellipse(370, 210, 100 + Math.abs(i) * 25, 40 + Math.abs(i) * 22, 0, 0, Math.PI * 2); context.stroke(); } context.fillStyle = "#f4be46"; context.fillRect(330, 150, 80, 120); context.fillStyle = "#c9d5d2"; context.fillRect(550, 190, 35, 40); measures = [measurement("Magnetfeld", field, "mT"), measurement("Anziehung", field ** 2 / values.abstand, "rel.")]; }
-    else if (id === "waves") { context.strokeStyle = "#63d6ce"; context.beginPath(); const wavelength = values.geschwindigkeit / values.frequenz; for (let x = 0; x < 700; x += 3) { const distance = x / 85; const reflectedDistance = (1400 - x) / 85; const phase = 2 * Math.PI * values.frequenz * time; const y = 210 + values.amplitude * Math.sin(2 * Math.PI * distance / wavelength - phase) + values.amplitude * .65 * Math.sin(2 * Math.PI * reflectedDistance / wavelength - phase); x ? context.lineTo(x, y) : context.moveTo(x, y); } context.stroke(); context.strokeStyle = "#f4be46"; context.lineWidth = 5; context.beginPath(); context.moveTo(705, 70); context.lineTo(705, 350); context.stroke(); measures = [measurement("Frequenz", values.frequenz, "Hz"), measurement("Wellenlänge", wavelength, "m"), measurement("Reflexionsgrad", 65, "%")]; }
-    else if (id === "heat") { const s = state; [s.hot, s.cold].forEach((temp, i) => { context.fillStyle = `hsl(${220 - temp * 1.5}, 75%, 56%)`; context.fillRect(130 + i * 280, 130, 190, 160); }); measures = [measurement("Warm", s.hot, "°C"), measurement("Kalt", s.cold, "°C"), measurement("ΔT", s.hot - s.cold, "K")]; }
-    else if (id === "collision") { const s = state; ball(s.x1, 220, 32, "#f4be46"); ball(s.x2, 220, 32, "#e76f51"); measures = [measurement("Impuls", values.masse1 * s.v1 + values.masse2 * s.v2, "kg m/s"), measurement("Energie", .5 * values.masse1 * s.v1 ** 2 + .5 * values.masse2 * s.v2 ** 2, "J")]; }
-    else if (id === "pendulum") { const s = state; const p1 = [380 + 110 * Math.sin(s.a1), 80 + 110 * Math.cos(s.a1)]; const p2 = [p1[0] + 110 * Math.sin(s.a2), p1[1] + 110 * Math.cos(s.a2)]; line(380, 80, ...p1, "#c9d5d2"); line(...p1, ...p2, "#c9d5d2"); ball(...p1, 14, "#f4be46"); ball(...p2, 17, "#e76f51"); measures = [measurement("Winkel 1", s.a1 * 180 / Math.PI, "°"), measurement("Winkel 2", s.a2 * 180 / Math.PI, "°")]; }
-    else if (id === "projectile") { const s = state; ball(s.x, s.y, 10, "#f4be46"); context.strokeStyle = "#526d70"; context.beginPath(); context.moveTo(0, 380); context.lineTo(760, 380); context.stroke(); measures = [measurement("Höhe", Math.max(0, 370 - s.y) / 5, "m"), measurement("Max. Höhe", s.maxY / 5, "m"), measurement("Reichweite", Math.max(0, s.x - 45) / 5, "m")]; }
-    else if (id === "gravity" || id === "blackhole") { const s = state; const scale = id === "gravity" ? 85 : 3; const cx = 380; const cy = 210; context.fillStyle = id === "gravity" ? "#3f8ed8" : "#020609"; context.beginPath(); context.arc(cx, cy, id === "gravity" ? 34 : 44, 0, Math.PI * 2); context.fill(); context.strokeStyle = "rgba(99,214,206,.55)"; context.beginPath(); s.trail.forEach(([x,y], i) => i ? context.lineTo(cx + x * scale, cy + y * scale) : context.moveTo(cx + x * scale, cy + y * scale)); context.stroke(); ball(cx + s.x * scale, cy + s.y * scale, 8, "#f4be46"); measures = [measurement("Abstand", Math.hypot(s.x, s.y), id === "gravity" ? "R⊕" : "px"), measurement("Geschwindigkeit", metric(), "km/s")]; }
-    else if (id === "rocket") { const s = state; const dryMass = Math.max(1000, values.masse * 1000 - Math.min(values.treibstoff, values.masse * .85) * 1000); const acceleration = ((s.fuel > 0 ? values.schub * 1000 : 0) / (dryMass + s.fuel)) - 9.80665; context.fillStyle = "#dfeee7"; context.fillRect(0, 365, 760, 55); const y = Math.max(40, 350 - s.h / 20); context.fillStyle = "#e76f51"; context.fillRect(365, y, 30, 55); context.fillStyle = "#f4be46"; context.beginPath(); context.moveTo(380, y - 30); context.lineTo(355, y); context.lineTo(405, y); context.fill(); measures = [measurement("Höhe", s.h, "m"), measurement("Geschwindigkeit", s.v, "m/s"), measurement("Beschleunigung", acceleration, "m/s²"), measurement("Treibstoff", s.fuel, "kg")]; }
-    else if (id === "drag") { const s = state; ball(380, Math.min(370, s.y), 22, "#f4be46"); measures = [measurement("Fallgeschwindigkeit", s.v, "m/s"), measurement("Endgeschwindigkeit", Math.sqrt(2 * values.masse * 9.81 / (1.225 * values.form * values.flaeche)), "m/s")]; }
-    else if (id === "optics") { const f = values.brennweite * 1.5; line(380, 50, 380, 370, "#63d6ce"); for (const y of [120, 210, 300]) { line(40, y, 380, y + values.winkel * 2, "#e76f51"); line(380, y + values.winkel * 2, 380 + f, 210, "#e76f51"); } measures = [measurement("Brennweite", values.brennweite, "mm"), measurement("Brennpunkt", values.brennweite, "mm"), measurement("Strahlwinkel", values.winkel, "°")]; }
-    else { const particle = acceleratorValues(); const r = Math.min(165, Math.max(45, particle.radius * 1500)); context.strokeStyle = "#63d6ce"; context.beginPath(); context.arc(380, 210, r, 0, Math.PI * 2); context.stroke(); ball(380 + r * Math.cos(time * 3), 210 + r * Math.sin(time * 3), 9, "#f4be46"); measures = [measurement("Energie", particle.energyKeV, "keV"), measurement("Geschwindigkeit", particle.speed / 1000, "km/s"), measurement("Bahnradius", particle.radius * 100, "cm")]; }
-    $("#measurements").innerHTML = measures.join(""); drawChart(); }
-  function line(x1,y1,x2,y2,stroke) { context.strokeStyle = stroke; context.beginPath(); context.moveTo(x1,y1); context.lineTo(x2,y2); context.stroke(); } function ball(x,y,r,fill) { context.fillStyle=fill; context.beginPath(); context.arc(x,y,r,0,Math.PI*2); context.fill(); }
-  function circuit() { const shorted = values.kurz > .5; context.strokeStyle = shorted ? "#e76f51" : "#f4be46"; context.lineWidth = 6; context.strokeRect(160, 110, 430, 210); context.fillStyle = "#dfeee7"; context.fillRect(150, 185, 30, 65); context.beginPath(); context.arc(500, 215, 35, 0, Math.PI * 2); context.fill(); context.fillStyle = "#0d2227"; context.fillText(shorted ? "KURZSCHLUSS" : "Lampe", 464, 220); }
-  function drawChart() { chartContext.clearRect(0,0,330,150); chartContext.fillStyle="#10262b"; chartContext.fillRect(0,0,330,150); if (history.length < 2) return; const max = Math.max(...history.map(Math.abs), 1); chartContext.strokeStyle="#63d6ce"; chartContext.beginPath(); history.forEach((v,i) => { const x=i/(history.length-1)*330; const y=75-v/max*58; i?chartContext.lineTo(x,y):chartContext.moveTo(x,y); }); chartContext.stroke(); }
-  function animate(now) { const dt = Math.min(.04, (now - (animate.last || now)) / 1000); animate.last = now; step(dt); animationId = requestAnimationFrame(animate); }
-  function buildCatalog() { const categories = ["Alle", ...new Set(experimentList.map(([, , category]) => category))]; $("#categoryFilters").innerHTML = categories.map((name, index) => `<button class="filter ${index === 0 ? "active" : ""}" data-category="${name}">${name}</button>`).join(""); $("#experimentCards").innerHTML = experimentList.map(([id,title,category,description]) => `<button class="experiment-card" data-id="${id}" data-category="${category}" type="button"><span>${category}</span><b>${title}</b><small>${description}</small></button>`).join(""); document.querySelectorAll(".experiment-card").forEach((card) => card.addEventListener("click", () => open(card.dataset.id))); document.querySelectorAll(".filter").forEach((button) => button.addEventListener("click", () => { document.querySelectorAll(".filter").forEach((item) => item.classList.toggle("active", item === button)); filter(button.dataset.category, $("#experimentSearch").value); })); }
-  function filter(category, query) { document.querySelectorAll(".experiment-card").forEach((card) => { const current = document.querySelector(".filter.active").dataset.category; card.hidden = !(current === "Alle" || card.dataset.category === current) || !card.textContent.toLowerCase().includes(query.toLowerCase()); }); }
-  window.openPhysicsPlatform = () => { $("#homeScreen").hidden = true; $("#labScreen").hidden = true; $("#physicsPlatform").hidden = false; if (!$("#experimentCards").children.length) buildCatalog(); };
-  $("#physicsHomeButton").addEventListener("click", () => { running = false; window.physics3d?.setRunning(false); $("#physicsPlatform").hidden = true; $("#homeScreen").hidden = false; }); $("#simStart").addEventListener("click", () => { running = true; window.physics3d?.setRunning(true); }); $("#simPause").addEventListener("click", () => { running = false; window.physics3d?.setRunning(false); }); $("#simReset").addEventListener("click", () => open(selected.id)); $("#twoDimensional").addEventListener("click", () => { $("#simulationCanvas").hidden = false; $("#threeViewport").hidden = true; $("#twoDimensional").classList.add("active"); $("#threeDimensional").classList.remove("active"); }); $("#threeDimensional").addEventListener("click", () => { $("#simulationCanvas").hidden = true; $("#threeViewport").hidden = false; $("#threeDimensional").classList.add("active"); $("#twoDimensional").classList.remove("active"); }); $("#experimentSearch").addEventListener("input", (event) => filter(document.querySelector(".filter.active")?.dataset.category || "Alle", event.target.value)); $("#levelLabel").insertAdjacentHTML("afterend", `<div class="level-picker">${["Grundlagen", "Fortgeschritten", "Expert"].map((level) => `<button data-level="${level}">${level}</button>`).join("")}</div>`); document.querySelectorAll("[data-level]").forEach((button) => button.addEventListener("click", () => { difficulty = button.dataset.level; $("#levelLabel").textContent = `Stufe: ${difficulty}`; })); requestAnimationFrame(animate);
+  function controlMarkup([key, label, min, max, value, unit]) {
+    return `<label class="parameter">
+      <span>${label}<b id="value-${key}">${value} ${unit}</b></span>
+      <input data-key="${key}" type="range" min="${min}" max="${max}" value="${value}" step="${(max - min) / 100}" />
+    </label>`;
+  }
+
+  function open(id) {
+    selected = experiments[id];
+    values = Object.fromEntries(
+      selected.controls.map(([key,,,, value]) => [key, value])
+    );
+
+    time = 0;
+    history = [];
+    state = initialState(id);
+    running = false;
+
+    window.physics3d?.select(id, values);
+
+    $("#simulationEmpty").hidden = true;
+    $("#simulationPanel").hidden = false;
+
+    $("#simCategory").textContent = selected.category;
+    $("#simTitle").textContent = selected.title;
+    $("#simDescription").textContent = selected.description;
+    $("#simChallenge").textContent = selected.challenge;
+
+    $("#parameterControls").innerHTML =
+      selected.controls.map(controlMarkup).join("");
+
+    $("#measurements").innerHTML = "";
+
+    document.querySelectorAll(".experiment-card").forEach((card) =>
+      card.classList.toggle("active", card.dataset.id === id)
+    );
+
+    document.querySelectorAll("[data-key]").forEach((input) =>
+      input.addEventListener("input", () => {
+        values[input.dataset.key] = Number(input.value);
+        window.physics3d?.update(values);
+
+        const definition = selected.controls.find(
+          ([key]) => key === input.dataset.key
+        );
+
+        $(`#value-${input.dataset.key}`).textContent =
+          `${Number(input.value).toFixed(definition[4] % 1 ? 2 : 0)} ${definition[5]}`;
+
+        if (
+          ["gravity", "pendulum", "blackhole", "projectile", "collision", "rocket", "drag"].includes(id)
+        ) {
+          state = initialState(id);
+        }
+
+        render();
+      })
+    );
+
+    render();
+  }
+
+  function initialState(id) {
+    $("#simExplanation").textContent = explanations[id];
+
+    if (id === "gravity")
+      return {
+        x: values.abstand,
+        y: 0,
+        vx: 0,
+        vy: values.geschwindigkeit,
+        trail: []
+      };
+
+    if (id === "rocket")
+      return {
+        h: 0,
+        v: 0,
+        fuel: Math.min(values.treibstoff, values.masse * .85) * 1000
+      };
+
+    if (id === "drag")
+      return {
+        y: 30,
+        v: 0
+      };
+
+    if (id === "collision")
+      return {
+        x1: 120,
+        x2: 610,
+        v1: values.tempo1,
+        v2: values.tempo2,
+        collided: false
+      };
+
+    if (id === "pendulum")
+      return {
+        a1: values.winkel * Math.PI / 180,
+        a2: values.winkel * Math.PI / 180 + .03,
+        w1: 0,
+        w2: 0,
+        trail: []
+      };
+
+    if (id === "blackhole")
+      return {
+        x: values.abstand,
+        y: -45,
+        vx: 0,
+        vy: values.geschwindigkeit * .75,
+        trail: []
+      };
+
+    if (id === "projectile")
+      return {
+        x: 45,
+        y: 370,
+        vx: values.tempo * Math.cos(values.winkel * Math.PI / 180),
+        vy: -values.tempo * Math.sin(values.winkel * Math.PI / 180),
+        maxY: 0
+      };
+
+    if (id === "heat")
+      return {
+        hot: values.heiss,
+        cold: values.kalt
+      };
+
+    return {};
+  }
+
+  function step(dt) {
+    if (!running || !selected) return;
+
+    time += dt;
+
+    const s = state;
+    const id = selected.id;
+
+    if (id === "gravity") {
+      const seconds = dt * 90;
+      const radiusKm = Math.hypot(s.x, s.y) * 6371;
+
+      if (radiusKm <= 6371) {
+        s.vx = 0;
+        s.vy = 0;
+      } else {
+        const a = 398600.4418 * values.masse / (radiusKm * radiusKm);
+
+        s.vx += -a * s.x / Math.hypot(s.x, s.y) * seconds;
+        s.vy += -a * s.y / Math.hypot(s.x, s.y) * seconds;
+
+        s.x += s.vx * seconds / 6371;
+        s.y += s.vy * seconds / 6371;
+
+        s.trail.push([s.x, s.y]);
+      }
+    }
+
+    if (id === "rocket") {
+      const dryMass =
+        Math.max(
+          1000,
+          values.masse * 1000 -
+          Math.min(values.treibstoff, values.masse * .85) * 1000
+        );
+
+      const mass = dryMass + s.fuel;
+      const thrust = s.fuel > 0 ? values.schub * 1000 : 0;
+      const density = 1.225 * Math.exp(-Math.max(0, s.h) / 8500);
+      const drag = .5 * density * .5 * 10 * s.v * Math.abs(s.v);
+      const a = (thrust - mass * 9.80665 - drag) / mass;
+
+      s.v += a * dt;
+      s.h += s.v * dt;
+
+      if (s.h <= 0 && s.v < 0) {
+        s.h = 0;
+        s.v = 0;
+      }
+
+      s.fuel = Math.max(
+        0,
+        s.fuel - thrust / (300 * 9.80665) * dt
+      );
+    }
+
+    if (id === "drag") {
+      if (s.y < 380) {
+        const a =
+          (values.masse * 9.81 -
+          .5 * 1.225 * values.form * values.flaeche *
+          s.v * Math.abs(s.v)) / values.masse;
+
+        s.v += a * dt;
+        s.y = Math.min(380, s.y + s.v * dt * 8);
+      } else {
+        s.v = 0;
+      }
+    }
+
+    if (id === "collision") {
+      s.x1 += s.v1 * dt * 28;
+      s.x2 += s.v2 * dt * 28;
+
+      if (
+        !s.collided &&
+        s.x1 + 32 >= s.x2 - 32 &&
+        s.v1 > s.v2
+      ) {
+        const e = values.elastizitaet;
+        const u1 = s.v1;
+        const u2 = s.v2;
+
+        s.v1 =
+          (values.masse1 * u1 +
+          values.masse2 * u2 -
+          values.masse2 * e * (u1 - u2)) /
+          (values.masse1 + values.masse2);
+
+        s.v2 =
+          (values.masse1 * u1 +
+          values.masse2 * u2 +
+          values.masse1 * e * (u1 - u2)) /
+          (values.masse1 + values.masse2);
+
+        s.collided = true;
+      }
+    }
+
+    if (id === "heat") {
+      const flow =
+        values.leitung * (s.hot - s.cold) / 120;
+
+      s.hot -= flow * dt;
+      s.cold += flow * dt;
+    }
+
+    if (
+      id === "projectile" &&
+      !(s.y >= 370 && s.vy > 0)
+    ) {
+      s.vy += values.gravitation * dt;
+      s.x += s.vx * dt * 5;
+      s.y += s.vy * dt * 5;
+
+      s.maxY = Math.max(s.maxY, 370 - s.y);
+
+      if (s.y >= 370 && s.vy > 0) {
+        s.y = 370;
+        s.vx = 0;
+        s.vy = 0;
+      }
+    }
+
+    if (id === "blackhole") {
+      const r = Math.hypot(s.x, s.y);
+      const a = values.masse * 950 / (r * r);
+
+      s.vx += -a * s.x / r * dt;
+      s.vy += -a * s.y / r * dt;
+
+      s.x += s.vx * dt * 4;
+      s.y += s.vy * dt * 4;
+
+      s.trail.push([s.x, s.y]);
+    }
+
+    if (id === "pendulum") {
+      const g = values.gravitation;
+      const d = s.a2 - s.a1;
+      const den = 2 - Math.cos(d) ** 2;
+
+      const a1 =
+        (Math.sin(d) *
+        (s.w2 ** 2 + s.w1 ** 2 * Math.cos(d)) +
+        2 * g * Math.sin(s.a2) * Math.cos(d) -
+        2 * g * Math.sin(s.a1)) / den;
+
+      const a2 =
+        (-Math.sin(d) *
+        (s.w2 ** 2 + s.w1 ** 2 * Math.cos(d)) +
+        2 * g * Math.sin(s.a1) * Math.cos(d) -
+        2 * g * Math.sin(s.a2)) / den;
+
+      s.w1 += a1 * dt;
+      s.w2 += a2 * dt;
+
+      s.a1 += s.w1 * dt;
+      s.a2 += s.w2 * dt;
+    }
+
+    history.push(metric());
+
+    if (history.length > 100)
+      history.shift();
+
+    render();
+  }
+
+  function acceleratorValues() {
+    const energyJ =
+      values.spannung * 1000 * 1.602176634e-19;
+
+    const protonMass = 1.67262192369e-27;
+
+    const speed =
+      Math.sqrt(2 * energyJ / protonMass);
+
+    return {
+      energyKeV: values.spannung,
+      speed,
+      radius:
+        protonMass * speed /
+        (1.602176634e-19 * values.feld)
+    };
+  }
+
+  function metric() {
+    const s = state;
+    const id = selected.id;
+
+    if (id === "electricity")
+      return values.spannung /
+        (values.kurz ? .08 : values.widerstand + .4);
+
+    if (id === "magnetism")
+      return 1.256e-6 *
+        values.windungen *
+        values.strom /
+        .1 * 1000;
+
+    if (id === "waves")
+      return values.amplitude;
+
+    if (id === "accelerator")
+      return acceleratorValues().speed;
+
+    if (id === "gravity")
+      return Math.hypot(s.vx, s.vy);
+
+    if (id === "rocket" || id === "drag")
+      return s.v;
+
+    if (id === "heat")
+      return s.hot;
+
+    if (id === "collision")
+      return s.v1;
+
+    if (id === "pendulum")
+      return s.a2;
+
+    if (id === "blackhole")
+      return Math.hypot(s.vx, s.vy);
+
+    if (id === "projectile")
+      return s.maxY;
+
+    return 0;
+  }
+
+  function measurement(label, value, unit) {
+    return `<div class="measurement">
+      <span>${label}</span>
+      <b>${Number(value).toFixed(2)}
+      <small>${unit}</small></b>
+    </div>`;
+  }
+
+  function render() {
+    if (!selected) return;
+
+    context.clearRect(0, 0, 760, 420);
+    context.fillStyle = "#0d2227";
+    context.fillRect(0, 0, 760, 420);
+
+    const id = selected.id;
+    let measures = [];
+
+    context.lineWidth = 2;
+
+    if (id === "electricity") {
+      const current = metric();
+
+      circuit();
+
+      measures = [
+        measurement("Spannung", values.spannung, "V"),
+        measurement("Stromstärke", current, "A"),
+        measurement("Leistung", values.spannung * current, "W")
+      ];
+    }
+
+    else if (id === "magnetism") {
+      const field = metric();
+
+      context.strokeStyle = "#63d6ce";
+
+      for (let i = -5; i <= 5; i++) {
+        context.beginPath();
+        context.ellipse(
+          370,
+          210,
+          100 + Math.abs(i) * 25,
+          40 + Math.abs(i) * 22,
+          0,
+          0,
+          Math.PI * 2
+        );
+        context.stroke();
+      }
+
+      context.fillStyle = "#f4be46";
+      context.fillRect(330, 150, 80, 120);
+
+      context.fillStyle = "#c9d5d2";
+      context.fillRect(550, 190, 35, 40);
+
+      measures = [
+        measurement("Magnetfeld", field, "mT"),
+        measurement(
+          "Anziehung",
+          field ** 2 / values.abstand,
+          "rel."
+        )
+      ];
+    }
+
+    else if (id === "waves") {
+      context.strokeStyle = "#63d6ce";
+      context.beginPath();
+
+      const wavelength =
+        values.geschwindigkeit / values.frequenz;
+
+      for (let x = 0; x < 700; x += 3) {
+        const distance = x / 85;
+        const reflectedDistance = (1400 - x) / 85;
+        const phase =
+          2 * Math.PI * values.frequenz * time;
+
+        const y =
+          210 +
+          values.amplitude *
+          Math.sin(
+            2 * Math.PI *
+            distance / wavelength -
+            phase
+          ) +
+          values.amplitude * .65 *
+          Math.sin(
+            2 * Math.PI *
+            reflectedDistance / wavelength -
+            phase
+          );
+
+        x
+          ? context.lineTo(x, y)
+          : context.moveTo(x, y);
+      }
+
+      context.stroke();
+
+      context.strokeStyle = "#f4be46";
+      context.lineWidth = 5;
+      context.beginPath();
+      context.moveTo(705, 70);
+      context.lineTo(705, 350);
+      context.stroke();
+
+      measures = [
+        measurement("Frequenz", values.frequenz, "Hz"),
+        measurement("Wellenlänge", wavelength, "m"),
+        measurement("Reflexionsgrad", 65, "%")
+      ];
+    }
+
+    else if (id === "heat") {
+      const s = state;
+
+      [s.hot, s.cold].forEach((temp, i) => {
+        context.fillStyle =
+          `hsl(${220 - temp * 1.5}, 75%, 56%)`;
+
+        context.fillRect(
+          130 + i * 280,
+          130,
+          190,
+          160
+        );
+      });
+
+      measures = [
+        measurement("Warm", s.hot, "°C"),
+        measurement("Kalt", s.cold, "°C"),
+        measurement("ΔT", s.hot - s.cold, "K")
+      ];
+    }
+
+    else if (id === "collision") {
+      const s = state;
+
+      ball(s.x1, 220, 32, "#f4be46");
+      ball(s.x2, 220, 32, "#e76f51");
+
+      measures = [
+        measurement(
+          "Impuls",
+          values.masse1 * s.v1 +
+          values.masse2 * s.v2,
+          "kg m/s"
+        ),
+
+        measurement(
+          "Energie",
+          .5 * values.masse1 * s.v1 ** 2 +
+          .5 * values.masse2 * s.v2 ** 2,
+          "J"
+        )
+      ];
+    }
+
+    else if (id === "pendulum") {
+      const s = state;
+
+      const p1 = [
+        380 + 110 * Math.sin(s.a1),
+        80 + 110 * Math.cos(s.a1)
+      ];
+
+      const p2 = [
+        p1[0] + 110 * Math.sin(s.a2),
+        p1[1] + 110 * Math.cos(s.a2)
+      ];
+
+      line(380, 80, ...p1, "#c9d5d2");
+      line(...p1, ...p2, "#c9d5d2");
+
+      ball(...p1, 14, "#f4be46");
+      ball(...p2, 17, "#e76f51");
+
+      measures = [
+        measurement(
+          "Winkel 1",
+          s.a1 * 180 / Math.PI,
+          "°"
+        ),
+
+        measurement(
+          "Winkel 2",
+          s.a2 * 180 / Math.PI,
+          "°"
+        )
+      ];
+    }
+
+    else if (id === "projectile") {
+      const s = state;
+
+      ball(s.x, s.y, 10, "#f4be46");
+
+      context.strokeStyle = "#526d70";
+      context.beginPath();
+      context.moveTo(0, 380);
+      context.lineTo(760, 380);
+      context.stroke();
+
+      measures = [
+        measurement(
+          "Höhe",
+          Math.max(0, 370 - s.y) / 5,
+          "m"
+        ),
+
+        measurement(
+          "Max. Höhe",
+          s.maxY / 5,
+          "m"
+        ),
+
+        measurement(
+          "Reichweite",
+          Math.max(0, s.x - 45) / 5,
+          "m"
+        )
+      ];
+    }
+
+    else if (id === "gravity" || id === "blackhole") {
+      const s = state;
+
+      const scale =
+        id === "gravity" ? 85 : 3;
+
+      const cx = 380;
+      const cy = 210;
+
+      context.fillStyle =
+        id === "gravity"
+          ? "#3f8ed8"
+          : "#020609";
+
+      context.beginPath();
+
+      context.arc(
+        cx,
+        cy,
+        id === "gravity" ? 34 : 44,
+        0,
+        Math.PI * 2
+      );
+
+      context.fill();
+
+      context.strokeStyle =
+        "rgba(99,214,206,.55)";
+
+      context.beginPath();
+
+      s.trail.forEach(([x, y], i) =>
+        i
+          ? context.lineTo(
+              cx + x * scale,
+              cy + y * scale
+            )
+          : context.moveTo(
+              cx + x * scale,
+              cy + y * scale
+            )
+      );
+
+      context.stroke();
+
+      ball(
+        cx + s.x * scale,
+        cy + s.y * scale,
+        8,
+        "#f4be46"
+      );
+
+      measures = [
+        measurement(
+          "Abstand",
+          Math.hypot(s.x, s.y),
+          id === "gravity" ? "R⊕" : "px"
+        ),
+
+        measurement(
+          "Geschwindigkeit",
+          metric(),
+          "km/s"
+        )
+      ];
+    }
+
+    else if (id === "rocket") {
+      const s = state;
+
+      const dryMass =
+        Math.max(
+          1000,
+          values.masse * 1000 -
+          Math.min(
+            values.treibstoff,
+            values.masse * .85
+          ) * 1000
+        );
+
+      const acceleration =
+        ((s.fuel > 0
+          ? values.schub * 1000
+          : 0) /
+          (dryMass + s.fuel)) -
+        9.80665;
+
+      context.fillStyle = "#dfeee7";
+      context.fillRect(0, 365, 760, 55);
+
+      const y =
+        Math.max(40, 350 - s.h / 20);
+
+      context.fillStyle = "#e76f51";
+      context.fillRect(365, y, 30, 55);
+
+      context.fillStyle = "#f4be46";
+      context.beginPath();
+      context.moveTo(380, y - 30);
+      context.lineTo(355, y);
+      context.lineTo(405, y);
+      context.fill();
+
+      measures = [
+        measurement("Höhe", s.h, "m"),
+        measurement("Geschwindigkeit", s.v, "m/s"),
+        measurement("Beschleunigung", acceleration, "m/s²"),
+        measurement("Treibstoff", s.fuel, "kg")
+      ];
+    }
+
+    else if (id === "drag") {
+      const s = state;
+
+      ball(
+        380,
+        Math.min(370, s.y),
+        22,
+        "#f4be46"
+      );
+
+      measures = [
+        measurement(
+          "Fallgeschwindigkeit",
+          s.v,
+          "m/s"
+        ),
+
+        measurement(
+          "Endgeschwindigkeit",
+          Math.sqrt(
+            2 *
+            values.masse *
+            9.81 /
+            (1.225 *
+            values.form *
+            values.flaeche)
+          ),
+          "m/s"
+        )
+      ];
+    }
+
+    else if (id === "optics") {
+      const f = values.brennweite * 1.5;
+
+      line(
+        380,
+        50,
+        380,
+        370,
+        "#63d6ce"
+      );
+
+      for (const y of [120, 210, 300]) {
+        line(
+          40,
+          y,
+          380,
+          y + values.winkel * 2,
+          "#e76f51"
+        );
+
+        line(
+          380,
+          y + values.winkel * 2,
+          380 + f,
+          210,
+          "#e76f51"
+        );
+      }
+
+      measures = [
+        measurement(
+          "Brennweite",
+          values.brennweite,
+          "mm"
+        ),
+
+        measurement(
+          "Brennpunkt",
+          values.brennweite,
+          "mm"
+        ),
+
+        measurement(
+          "Strahlwinkel",
+          values.winkel,
+          "°"
+        )
+      ];
+    }
+
+    else {
+      const particle = acceleratorValues();
+
+      const r =
+        Math.min(
+          165,
+          Math.max(
+            45,
+            particle.radius * 1500
+          )
+        );
+
+      context.strokeStyle = "#63d6ce";
+      context.beginPath();
+
+      context.arc(
+        380,
+        210,
+        r,
+        0,
+        Math.PI * 2
+      );
+
+      context.stroke();
+
+      ball(
+        380 + r * Math.cos(time * 3),
+        210 + r * Math.sin(time * 3),
+        9,
+        "#f4be46"
+      );
+
+      measures = [
+        measurement(
+          "Energie",
+          particle.energyKeV,
+          "keV"
+        ),
+
+        measurement(
+          "Geschwindigkeit",
+          particle.speed / 1000,
+          "km/s"
+        ),
+
+        measurement(
+          "Bahnradius",
+          particle.radius * 100,
+          "cm"
+        )
+      ];
+    }
+
+    $("#measurements").innerHTML =
+      measures.join("");
+
+    drawChart();
+  }
+
+  function line(x1, y1, x2, y2, stroke) {
+    context.strokeStyle = stroke;
+    context.beginPath();
+    context.moveTo(x1, y1);
+    context.lineTo(x2, y2);
+    context.stroke();
+  }
+
+  function ball(x, y, r, fill) {
+    context.fillStyle = fill;
+    context.beginPath();
+    context.arc(x, y, r, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  function circuit() {
+    const shorted = values.kurz > .5;
+
+    context.strokeStyle =
+      shorted ? "#e76f51" : "#f4be46";
+
+    context.lineWidth = 6;
+
+    context.strokeRect(
+      160,
+      110,
+      430,
+      210
+    );
+
+    context.fillStyle = "#dfeee7";
+    context.fillRect(
+      150,
+      185,
+      30,
+      65
+    );
+
+    context.beginPath();
+
+    context.arc(
+      500,
+      215,
+      35,
+      0,
+      Math.PI * 2
+    );
+
+    context.fill();
+
+    context.fillStyle = "#0d2227";
+
+    context.fillText(
+      shorted ? "KURZSCHLUSS" : "Lampe",
+      464,
+      220
+    );
+  }
+
+  function drawChart() {
+    chartContext.clearRect(
+      0,
+      0,
+      330,
+      150
+    );
+
+    chartContext.fillStyle = "#10262b";
+
+    chartContext.fillRect(
+      0,
+      0,
+      330,
+      150
+    );
+
+    if (history.length < 2) return;
+
+    const max =
+      Math.max(
+        ...history.map(Math.abs),
+        1
+      );
+
+    chartContext.strokeStyle = "#63d6ce";
+    chartContext.beginPath();
+
+    history.forEach((v, i) => {
+      const x =
+        i /
+        (history.length - 1) *
+        330;
+
+      const y =
+        75 -
+        v / max * 58;
+
+      i
+        ? chartContext.lineTo(x, y)
+        : chartContext.moveTo(x, y);
+    });
+
+    chartContext.stroke();
+  }
+
+  function animate(now) {
+    const dt =
+      Math.min(
+        .04,
+        (now - (animate.last || now)) / 1000
+      );
+
+    animate.last = now;
+
+    step(dt);
+
+    animationId =
+      requestAnimationFrame(animate);
+  }
+
+  function buildCatalog() {
+    const categories = [
+      "Alle",
+      ...new Set(
+        experimentList.map(
+          ([, , category]) => category
+        )
+      )
+    ];
+
+    $("#categoryFilters").innerHTML =
+      categories
+        .map(
+          (name, index) =>
+            `<button class="filter ${
+              index === 0 ? "active" : ""
+            }" data-category="${name}">
+              ${name}
+            </button>`
+        )
+        .join("");
+
+    $("#experimentCards").innerHTML =
+      experimentList
+        .map(
+          ([id, title, category, description]) =>
+            `<button
+              class="experiment-card"
+              data-id="${id}"
+              data-category="${category}"
+              type="button"
+            >
+              <span>${category}</span>
+              <b>${title}</b>
+              <small>${description}</small>
+            </button>`
+        )
+        .join("");
+
+    document
+      .querySelectorAll(".experiment-card")
+      .forEach((card) =>
+        card.addEventListener(
+          "click",
+          () => open(card.dataset.id)
+        )
+      );
+
+    document
+      .querySelectorAll(".filter")
+      .forEach((button) =>
+        button.addEventListener(
+          "click",
+          () => {
+            document
+              .querySelectorAll(".filter")
+              .forEach((item) =>
+                item.classList.toggle(
+                  "active",
+                  item === button
+                )
+              );
+
+            filter(
+              button.dataset.category,
+              $("#experimentSearch").value
+            );
+          }
+        )
+      );
+  }
+
+  function filter(category, query) {
+    document
+      .querySelectorAll(".experiment-card")
+      .forEach((card) => {
+        const current =
+          document
+            .querySelector(".filter.active")
+            .dataset.category;
+
+        card.hidden =
+          !(
+            current === "Alle" ||
+            card.dataset.category === current
+          ) ||
+          !card.textContent
+            .toLowerCase()
+            .includes(query.toLowerCase());
+      });
+  }
+
+  window.openPhysicsPlatform = () => {
+    $("#homeScreen").hidden = true;
+    $("#labScreen").hidden = true;
+    $("#physicsPlatform").hidden = false;
+
+    if (!$("#experimentCards").children.length)
+      buildCatalog();
+  };
+
+  $("#physicsHomeButton").addEventListener(
+    "click",
+    () => {
+      running = false;
+      window.physics3d?.setRunning(false);
+      $("#physicsPlatform").hidden = true;
+      $("#homeScreen").hidden = false;
+    }
+  );
+
+  $("#simStart").addEventListener(
+    "click",
+    () => {
+      running = true;
+      window.physics3d?.setRunning(true);
+    }
+  );
+
+  $("#simPause").addEventListener(
+    "click",
+    () => {
+      running = false;
+      window.physics3d?.setRunning(false);
+    }
+  );
+
+  $("#simReset").addEventListener(
+    "click",
+    () => open(selected.id)
+  );
+
+  $("#twoDimensional").addEventListener(
+    "click",
+    () => {
+      $("#simulationCanvas").hidden = false;
+      $("#threeViewport").hidden = true;
+
+      $("#twoDimensional").classList.add("active");
+      $("#threeDimensional").classList.remove("active");
+    }
+  );
+
+  $("#threeDimensional").addEventListener(
+    "click",
+    () => {
+      $("#simulationCanvas").hidden = true;
+      $("#threeViewport").hidden = false;
+
+      $("#threeDimensional").classList.add("active");
+      $("#twoDimensional").classList.remove("active");
+    }
+  );
+
+  $("#experimentSearch").addEventListener(
+    "input",
+    (event) =>
+      filter(
+        document
+          .querySelector(".filter.active")
+          ?.dataset.category || "Alle",
+        event.target.value
+      )
+  );
+
+  $("#levelLabel").insertAdjacentHTML(
+    "afterend",
+    `<div class="level-picker">
+      ${[
+        "Grundlagen",
+        "Fortgeschritten",
+        "Expert"
+      ]
+        .map(
+          (level) =>
+            `<button data-level="${level}">
+              ${level}
+            </button>`
+        )
+        .join("")}
+    </div>`
+  );
+
+  document
+    .querySelectorAll("[data-level]")
+    .forEach((button) =>
+      button.addEventListener(
+        "click",
+        () => {
+          difficulty =
+            button.dataset.level;
+
+          $("#levelLabel").textContent =
+            `Stufe: ${difficulty}`;
+        }
+      )
+    );
+
+  requestAnimationFrame(animate);
 })();

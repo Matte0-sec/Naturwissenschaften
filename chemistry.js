@@ -30,22 +30,95 @@
   let selected; let values = {}; let time = 0; let running = false; let history = []; let frame;
   function range([key, label, min, max, value, unit]) { return `<label class="parameter"><span>${label}<b id="chem-${key}">${value} ${unit}</b></span><input data-chem="${key}" type="range" min="${min}" max="${max}" value="${value}" step="${(max-min)/100}" /></label>`; }
   function open(id) { selected = experiments[id]; values = Object.fromEntries(selected.controls.map(([key,,,,value]) => [key, value])); time = 0; history = []; running = false; $("#chemistryEmpty").hidden = true; $("#chemistryPanel").hidden = false; $("#chemCategory").textContent = selected.category; $("#chemTitle").textContent = selected.title; $("#chemDescription").textContent = selected.description; $("#chemChallenge").textContent = selected.challenge; $("#chemControls").innerHTML = selected.controls.map(range).join(""); document.querySelectorAll(".experiment-card[data-chem-id]").forEach((card) => card.classList.toggle("active", card.dataset.chemId === id)); document.querySelectorAll("[data-chem]").forEach((input) => input.addEventListener("input", () => { values[input.dataset.chem] = Number(input.value); const definition = selected.controls.find(([key]) => key === input.dataset.chem); $(`#chem-${input.dataset.chem}`).textContent = `${Number(input.value).toFixed(definition[4] % 1 ? 2 : 0)} ${definition[5]}`; render(); })); render(); }
-  function calc() { const id = selected.id; const gasConstant = 8.314462618; $("#chemExplanation").textContent = explanations[id]; if (id === "titration") { const acidMoles = values.saeure / 1000 * values.konz; const baseMoles = values.lauge / 1000 * values.konz; const volume = (values.saeure + values.lauge) / 1000; const excess = acidMoles - baseMoles; const ph = Math.abs(excess) < 1e-10 ? 7 : excess > 0 ? -Math.log10(excess / volume) : 14 + Math.log10(-excess / volume); return { ph: Math.max(0, Math.min(14, ph)), main: ph }; } if (id === "kinetics") { const kelvin = values.temperatur + 273.15; const referenceRate = .12; const activationEnergy = values.katalysator ? 30000 : 50000; const rateConstant = referenceRate * Math.exp((-activationEnergy / gasConstant) * (1 / kelvin - 1 / 298.15)); const rate = rateConstant * values.konz; return { rate, activationEnergy: activationEnergy / 1000, main: rate }; } if (id === "equilibrium") { const kelvin = values.temperatur + 273.15; const equilibriumConstant = 2 * Math.exp((-18000 / gasConstant) * (1 / kelvin - 1 / 298.15)); const fraction = equilibriumConstant * values.edukt / (equilibriumConstant * values.edukt + values.produkt); return { fraction, equilibriumConstant, main: fraction }; } if (id === "electrolysis") { const charge = values.strom * values.zeit * 60; const mol = .9 * charge / (2 * 96485.33212); return { mol, charge, main: mol }; } if (id === "gases") { const pressure = values.stoffmenge * .08314462618 * (values.temperatur + 273.15) / values.volumen; return { pressure, main: pressure }; } if (id === "calorimetry") { const heat = values.stoff * values.enthalpie; const heatCapacity = values.wasser * 4.184 + 45; const delta = -heat * 1000 / heatCapacity; return { heat, delta, main: delta }; } if (id === "solubility") { const gramsPer100gWater = 13.3 + .55 * values.temperatur + .0105 * values.temperatur ** 2; const solubility = values.wasser / 100 * gramsPer100gWater; return { solubility, dissolved: Math.min(values.salz, solubility), main: solubility }; } if (id === "redox") { const kelvin = 298.15; const voltage = values.kathode - values.anode - gasConstant * kelvin / (2 * 96485.33212) * Math.log(1 / values.konz); return { voltage, main: voltage }; } if (id === "molecules") { const pairs = values.bindungen + values.freie; const angle = pairs === 4 ? [109.5, 107, 104.5][values.freie] : pairs === 3 ? [120, 117][values.freie] : 180; return { angle, main: angle }; } const remaining = values.kerne * Math.pow(.5, values.zeit / values.halbwert); return { remaining, main: remaining }; }
+  function calc() {
+    const id = selected.id;
+    const gasConstant = 8.314462618;
+    const faraday = 96485.33212;
+    const progress = Math.min(1, time / 8);
+    $("#chemExplanation").textContent = explanations[id];
+
+    if (id === "titration") {
+      const acidMoles = values.saeure / 1000 * values.konz;
+      const baseMoles = values.lauge / 1000 * values.konz;
+      const volume = (values.saeure + values.lauge) / 1000;
+      const excess = acidMoles - baseMoles;
+      const ph = Math.abs(excess) < 1e-10 ? 7 : excess > 0 ? -Math.log10(excess / volume) : 14 + Math.log10(-excess / volume);
+      return { ph: Math.max(0, Math.min(14, ph)), main: ph };
+    }
+
+    if (id === "kinetics") {
+      const kelvin = values.temperatur + 273.15;
+      const activationEnergy = values.katalysator ? 30000 : 50000;
+      const rateConstant = .12 * Math.exp((-activationEnergy / gasConstant) * (1 / kelvin - 1 / 298.15));
+      const rate = rateConstant * values.konz;
+      const conversion = 1 - Math.exp(-rate * time * 2);
+      return { rate, conversion, activationEnergy: activationEnergy / 1000, main: conversion };
+    }
+
+    if (id === "equilibrium") {
+      const kelvin = values.temperatur + 273.15;
+      const equilibriumConstant = 2 * Math.exp((-18000 / gasConstant) * (1 / kelvin - 1 / 298.15));
+      const targetFraction = equilibriumConstant * values.edukt / (equilibriumConstant * values.edukt + values.produkt);
+      const fraction = targetFraction * (1 - Math.exp(-time * .75));
+      return { fraction, equilibriumConstant, main: fraction };
+    }
+
+    if (id === "electrolysis") {
+      const elapsedMinutes = values.zeit * progress;
+      const charge = values.strom * elapsedMinutes * 60;
+      const efficiency = .55 + .35 * Math.min(1, Math.max(0, (values.spannung - 1.23) / 4));
+      const mol = efficiency * charge / (2 * faraday);
+      return { mol, charge, elapsedMinutes, efficiency: efficiency * 100, main: mol };
+    }
+
+    if (id === "gases") {
+      const pressure = values.stoffmenge * .08314462618 * (values.temperatur + 273.15) / values.volumen;
+      return { pressure, main: pressure };
+    }
+
+    if (id === "calorimetry") {
+      const heat = values.stoff * values.enthalpie;
+      const heatCapacity = values.wasser * 4.184 + 45;
+      const delta = -heat * 1000 / heatCapacity * (1 - Math.exp(-time * .8));
+      return { heat: heat * (1 - Math.exp(-time * .8)), delta, main: delta };
+    }
+
+    if (id === "solubility") {
+      const gramsPer100gWater = 13.3 + .55 * values.temperatur + .0105 * values.temperatur ** 2;
+      const solubility = values.wasser / 100 * gramsPer100gWater;
+      return { solubility, dissolved: Math.min(values.salz, solubility), main: solubility };
+    }
+
+    if (id === "redox") {
+      const voltage = values.kathode - values.anode - gasConstant * 298.15 / (2 * faraday) * Math.log(1 / values.konz);
+      return { voltage, electronFlow: Math.max(0, voltage) * values.konz * progress, main: voltage };
+    }
+
+    if (id === "molecules") {
+      const pairs = values.bindungen + values.freie;
+      const angle = pairs === 4 ? [109.5, 107, 104.5][values.freie] : pairs === 3 ? [120, 117][values.freie] : 180;
+      return { angle, main: angle };
+    }
+
+    const elapsedSeconds = values.zeit * progress;
+    const remaining = values.kerne * Math.pow(.5, elapsedSeconds / values.halbwert);
+    return { remaining, elapsedSeconds, main: remaining };
+  }
   function box(label, value, unit) { return `<div class="measurement"><span>${label}</span><b>${Number(value).toFixed(2)} <small>${unit}</small></b></div>`; }
-  function render() { if (!selected) return; const result = calc(); const id = selected.id; context.clearRect(0,0,760,420); context.fillStyle="#0d2227"; context.fillRect(0,0,760,420); let readings = [];
+  function render() { if (!selected) return; const result = calc(); const id = selected.id; context.clearRect(0,0,760,420); context.fillStyle="#0d2227"; context.fillRect(0,0,760,420); context.fillStyle=running?"#63d6ce":"#c9d5d2"; context.font="14px Space Grotesk"; context.fillText(running?`Reaktion läuft · ${time.toFixed(1)} s`:"Bereit · Start drücken",24,32); let readings = [];
     if (id === "titration") { const hue = Math.max(0, Math.min(250, 130 + (result.ph - 7) * 20)); beaker(`hsl(${hue},65%,55%)`); readings=[box("pH-Wert",result.ph,""),box("Neutralpunkt",values.saeure,"mL Lauge")]; }
     else if (id === "kinetics") { particles("#f4be46", Math.min(100, result.rate * 80)); readings=[box("Geschwindigkeit",result.rate,"mol L⁻¹ s⁻¹"),box("Aktivierungsenergie",result.activationEnergy,"kJ/mol")]; }
     else if (id === "equilibrium") { beaker("#63d6ce", result.fraction); readings=[box("Produktanteil",result.fraction*100,"%"),box("Gleichgewichtskonstante",result.equilibriumConstant,"")]; }
-    else if (id === "electrolysis") { beaker("#5372af"); particles("#dfeee7", 40); readings=[box("Abgeschieden",result.mol*63.546,"g Cu"),box("Ladung",result.charge,"C"),box("Stromausbeute",90,"%")]; }
+    else if (id === "electrolysis") { beaker("#5372af"); context.fillStyle="#c9d5d2"; context.fillRect(280,120,16,200); context.fillRect(464,120,16,200); context.fillStyle="#dfeee7"; context.fillText("Kathode: Cu-Abscheidung",250,110); context.fillText("Anode",450,110); for(let i=0;i<8;i++){const y=135+(i*37%155); circle(310+((time*45+i*53)%145),y,5,"#f4be46");} const deposit=Math.min(42,result.mol*63.546*10); context.fillStyle="#e76f51"; context.fillRect(280-deposit,170,deposit,100); readings=[box("Abgeschieden",result.mol*63.546,"g Cu"),box("Ladung",result.charge,"C"),box("Stromausbeute",result.efficiency,"%")]; }
     else if (id === "gases") { context.strokeStyle="#dfeee7"; context.strokeRect(170,80,420,270); particles("#63d6ce",Math.min(100,result.pressure*20)); readings=[box("Druck",result.pressure,"bar"),box("Temperatur",values.temperatur+273.15,"K")]; }
     else if (id === "calorimetry") { const hue = result.delta < 0 ? 215 : 8; beaker(`hsl(${hue},75%,55%)`); readings=[box("Reaktionswärme",result.heat,"kJ"),box("Delta T",result.delta,"K")]; }
-    else if (id === "solubility") { beaker("#75c6b5"); context.fillStyle="#f4be46"; for(let x=260;x<500;x+=18) context.fillRect(x,330,10,8); readings=[box("Löslich (KNO₃)",result.solubility,"g"),box("Gelöst",result.dissolved,"g"),box("Bodensatz",Math.max(0, values.salz-result.solubility),"g")]; }
-    else if (id === "redox") { context.fillStyle="#5372af"; context.fillRect(150,180,180,150); context.fillStyle="#e76f51"; context.fillRect(430,180,180,150); line(240,150,520,150,"#f4be46"); readings=[box("Zellspannung",result.voltage,"V"),box("Elektronenfluss",result.voltage*values.konz,"rel.")]; }
+    else if (id === "solubility") { beaker("#75c6b5"); const sediment=Math.max(0, values.salz-result.solubility); context.fillStyle="#f4be46"; for(let x=260;x<260+Math.min(240,sediment*4);x+=18) context.fillRect(x,330,10,8); readings=[box("Löslich (KNO₃)",result.solubility,"g"),box("Gelöst",result.dissolved,"g"),box("Bodensatz",sediment,"g")]; }
+    else if (id === "redox") { context.fillStyle="#5372af"; context.fillRect(150,180,180,150); context.fillStyle="#e76f51"; context.fillRect(430,180,180,150); context.fillStyle="#c9d5d2"; context.fillRect(225,125,16,180); context.fillRect(505,125,16,180); line(240,150,520,150,"#f4be46"); for(let i=0;i<7;i++){const x=245+((time*95*result.electronFlow+i*43)%270); circle(x,150,5,"#63d6ce");} readings=[box("Zellspannung",result.voltage,"V"),box("Elektronenfluss",result.electronFlow,"rel.")]; }
     else if (id === "molecules") { const n = values.bindungen; const radius = values.bindung; context.fillStyle="#e76f51"; context.beginPath(); context.arc(380,210,28,0,Math.PI*2);context.fill(); for(let i=0;i<n;i++){const a=i*Math.PI*2/n-Math.PI/2; line(380,210,380+Math.cos(a)*radius,210+Math.sin(a)*radius,"#dfeee7"); circle(380+Math.cos(a)*radius,210+Math.sin(a)*radius,16,"#63d6ce");} readings=[box("Bindungswinkel",result.angle,"Grad"),box("Elektronenpaare",values.bindungen+values.freie,"")]; }
     else { particles("#f4be46", Math.min(100,result.remaining/values.kerne*100)); readings=[box("Verbleibende Kerne",result.remaining,""),box("Zerfallen",values.kerne-result.remaining,"")]; }
     $("#chemMeasurements").innerHTML=readings.join(""); drawGraph(result.main); }
-  function beaker(fill, level=.68) { context.strokeStyle="#dfeee7"; context.lineWidth=5; context.strokeRect(255,75,250,270); context.fillStyle=fill; context.fillRect(260,340-255*level,240,255*level); }
-  function particles(fill, amount) { context.fillStyle=fill; const count=Math.floor(8+amount*.45); for(let i=0;i<count;i++){const x=190+(i*71%370);const y=95+(i*113%230); context.beginPath();context.arc(x,y,4+(i%3),0,Math.PI*2);context.fill();} }
+  function beaker(fill, level=.68) { const liquidTop=340-255*level; context.strokeStyle="#dfeee7"; context.lineWidth=5; context.strokeRect(255,75,250,270); context.fillStyle=fill; context.fillRect(260,liquidTop,240,255*level); if(running){context.fillStyle="rgba(223,238,231,.55)"; for(let i=0;i<7;i++){const x=275+((i*41+time*27)%205);const y=liquidTop+25+((i*59+time*43)%(Math.max(25,245*level)));context.beginPath();context.arc(x,y,2+(i%3),0,Math.PI*2);context.fill();}} }
+  function particles(fill, amount) { context.fillStyle=fill; const count=Math.floor(8+amount*.45); for(let i=0;i<count;i++){const x=190+((i*71+time*(18+i%4*8))%370);const y=95+((i*113+Math.sin(time*2+i)*24+230)%230);context.beginPath();context.arc(x,y,4+(i%3),0,Math.PI*2);context.fill();} }
   function circle(x,y,r,fill){context.fillStyle=fill;context.beginPath();context.arc(x,y,r,0,Math.PI*2);context.fill();} function line(x,y,x2,y2,stroke){context.strokeStyle=stroke;context.lineWidth=3;context.beginPath();context.moveTo(x,y);context.lineTo(x2,y2);context.stroke();}
   function drawGraph(value) { graphContext.clearRect(0,0,330,150); graphContext.fillStyle="#10262b";graphContext.fillRect(0,0,330,150); const series=[...history,value]; if(series.length<2)return; const max=Math.max(...series.map(Math.abs),1); graphContext.strokeStyle="#f4be46";graphContext.beginPath();series.forEach((v,i)=>{const x=i/(series.length-1)*330;const y=75-v/max*58;i?graphContext.lineTo(x,y):graphContext.moveTo(x,y);});graphContext.stroke(); }
   function tick(timestamp) { const delta=Math.min(.04,(timestamp-(tick.last||timestamp))/1000);tick.last=timestamp;if(running&&selected){time+=delta;history.push(calc().main);if(history.length>100)history.shift();render();} frame=requestAnimationFrame(tick); }

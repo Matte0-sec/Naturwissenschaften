@@ -118,6 +118,8 @@
             <div class="simulation-title"><div><p class="eyebrow" id="chemCategory"></p><h2 id="chemTitle"></h2></div><div class="simulation-actions"><button id="chemStart" class="primary-button" type="button">Start</button><button id="chemPause" class="tool-button" type="button" title="Pausieren">Ⅱ</button><button id="chemReset" class="tool-button" type="button" title="Zurücksetzen">↺</button></div></div>
             <p id="chemDescription" class="sim-description"></p>
             <section class="explanation-box chemistry-explanation" aria-label="Erklärung zum Experiment"><h3>Was passiert?</h3><p id="chemExplanation"></p></section>
+            <div id="chemVisualMode" class="visual-mode" hidden><span>Ansicht</span><button id="chemTwoDimensional" class="active" type="button">2D</button><button id="chemThreeDimensional" type="button">3D</button></div>
+            <div id="chemistryThreeViewport" class="three-viewport" hidden aria-label="Dreidimensionaler Vergleich des Materials vor und nach der Säurereaktion"></div>
             <canvas id="chemistryCanvas" width="760" height="420" aria-label="Chemie-Simulation"></canvas>
             <div id="chemMeasurements" class="measurements"></div>
             <div class="simulation-bottom"><div id="chemControls" class="parameter-controls"></div><div class="chart-panel"><span>Verlauf</span><canvas id="chemChart" width="330" height="150" aria-label="Chemie Diagramm"></canvas></div></div>
@@ -191,6 +193,7 @@
   </main>
   <script type="module" src="three-physics.js"></script>
   <script src="physics.js"></script>
+  <script type="module" src="chemistry-three.js"></script>
   <script src="chemistry.js"></script>
   <script src="biology.js"></script>
   <script type="module" src="biology-three.js"></script>

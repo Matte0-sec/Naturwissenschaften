@@ -273,6 +273,66 @@ function makeDrag() {
 
 }
 
+function makeElectricity() {
+
+  const current = Math.max(.15, (parameters.spannung || 12) / Math.max(parameters.widerstand || 12, 1));
+
+  line([[-4, 0, 0], [-4, 2, 0], [4, 2, 0], [4, 0, 0], [-4, 0, 0]], 0x63d6ce);
+  mesh(new THREE.BoxGeometry(1.4, .7, .7), 0xe76f51, [-3.25, 0, 0], 0x582012);
+
+  const bulb = mesh(new THREE.SphereGeometry(.55, 24, 20), 0xf4be46, [1.8, 2, 0], 0x6f4900);
+  bulb.material.emissiveIntensity = Math.min(3, current * .55);
+
+  const charges = Array.from({ length: 7 }, () => mesh(new THREE.SphereGeometry(.12, 16, 12), 0x63d6ce, [-4, 0, .16], 0x084a47));
+
+  movingObjects.push({ charges, bulb, type: "current", current });
+
+}
+
+function makeHeat() {
+
+  const hotColor = new THREE.Color().setHSL(Math.max(0, .08 - (parameters.heiss || 80) / 1700), .8, .52);
+  const coldColor = new THREE.Color().setHSL(.55, .7, .48);
+  const hotBlock = mesh(new THREE.BoxGeometry(2.4, 2.6, 1.5), hotColor, [-2.2, 0, 0], 0x612000);
+  const coldBlock = mesh(new THREE.BoxGeometry(2.4, 2.6, 1.5), coldColor, [2.2, 0, 0], 0x00384e);
+
+  mesh(new THREE.BoxGeometry(2, .32, .7), 0x9ab2ae, [0, 0, 0]);
+
+  const particles = Array.from({ length: 18 }, (_, index) => mesh(new THREE.SphereGeometry(.1, 12, 10), index % 2 ? 0xf4be46 : 0x63d6ce, [0, 0, 1], index % 2 ? 0x5d3d00 : 0x084a47));
+
+  movingObjects.push({ hotBlock, coldBlock, particles, type: "heatflow" });
+
+}
+
+function makeCollision() {
+
+  ground();
+
+  mesh(new THREE.BoxGeometry(10.5, .2, 2), 0x405c60, [0, -1.55, 0]);
+
+  const radiusOne = Math.max(.35, Math.min(.85, .32 + (parameters.masse1 || 1) / 12));
+  const radiusTwo = Math.max(.35, Math.min(.85, .32 + (parameters.masse2 || 1) / 12));
+  const first = mesh(new THREE.SphereGeometry(radiusOne, 28, 20), 0xf4be46, [-4, -1 + radiusOne, 0], 0x634200);
+  const second = mesh(new THREE.SphereGeometry(radiusTwo, 28, 20), 0xe76f51, [4, -1 + radiusTwo, 0], 0x652310);
+
+  movingObjects.push({ first, second, radiusOne, radiusTwo, firstVelocity: parameters.tempo1 || 4, secondVelocity: parameters.tempo2 || -2, collided: false, type: "collision" });
+
+}
+
+function makeProjectile() {
+
+  ground();
+
+  const angle = (parameters.winkel || 45) * Math.PI / 180;
+  const speed = parameters.tempo || 20;
+  const ball = mesh(new THREE.SphereGeometry(.25, 24, 18), 0xf4be46, [-4.5, -.9, 0], 0x694700);
+  const trail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x63d6ce, transparent: true, opacity: .7 }));
+
+  group.add(trail);
+  movingObjects.push({ ball, trail, points: [], horizontalVelocity: speed * Math.cos(angle) * .035, verticalVelocity: speed * Math.sin(angle) * .035, landed: false, type: "projectile" });
+
+}
+
 function makeDefault() {
 
   ground();
@@ -307,6 +367,14 @@ function construct(id) {
   else if (id === "optics") makeOptics();
 
   else if (id === "drag") makeDrag();
+
+  else if (id === "electricity") makeElectricity();
+
+  else if (id === "heat") makeHeat();
+
+  else if (id === "collision") makeCollision();
+
+  else if (id === "projectile") makeProjectile();
 
   else makeDefault();
 
@@ -353,6 +421,62 @@ function animate(clock) {
         if (item.object.position.y <= -1.25 + item.radius) {
           item.object.position.y = -1.25 + item.radius;
           item.grounded = true;
+        }
+      }
+
+      if (item.type === "current") {
+        const circuitLength = 12;
+        const speed = item.current * .55;
+        item.charges.forEach((charge, index) => {
+          const position = (elapsed * speed + index * circuitLength / item.charges.length) % circuitLength;
+          if (position < 4) charge.position.set(-4 + position * 2, 0, .16);
+          else if (position < 6) charge.position.set(4, (position - 4) * 1, .16);
+          else if (position < 10) charge.position.set(4 - (position - 6) * 2, 2, .16);
+          else charge.position.set(-4, 2 - (position - 10), .16);
+        });
+        item.bulb.material.emissiveIntensity = Math.min(3, .3 + item.current * (1 + Math.sin(elapsed * 7)) * .4);
+      }
+
+      if (item.type === "heatflow") {
+        const strength = Math.max(.25, (parameters.leitung || 1) / 2);
+        item.particles.forEach((particle, index) => {
+          particle.position.x = Math.sin(elapsed * strength + index * 1.7) * 3.3;
+          particle.position.y = Math.cos(elapsed * strength * 1.8 + index) * .65;
+          particle.position.z = .9 + Math.sin(elapsed + index) * .25;
+        });
+        item.hotBlock.material.emissiveIntensity = .35 + Math.sin(elapsed * strength) * .15;
+        item.coldBlock.material.emissiveIntensity = .16 + Math.cos(elapsed * strength) * .08;
+      }
+
+      if (item.type === "collision") {
+        item.first.position.x += item.firstVelocity * frameSeconds * .42;
+        item.second.position.x += item.secondVelocity * frameSeconds * .42;
+        if (!item.collided && item.first.position.x + item.radiusOne >= item.second.position.x - item.radiusTwo) {
+          const elasticity = parameters.elastizitaet || .7;
+          const massOne = parameters.masse1 || 1;
+          const massTwo = parameters.masse2 || 1;
+          const firstVelocity = item.firstVelocity;
+          const secondVelocity = item.secondVelocity;
+          item.firstVelocity = (massOne * firstVelocity + massTwo * secondVelocity - massTwo * elasticity * (firstVelocity - secondVelocity)) / (massOne + massTwo);
+          item.secondVelocity = (massOne * firstVelocity + massTwo * secondVelocity + massOne * elasticity * (firstVelocity - secondVelocity)) / (massOne + massTwo);
+          item.collided = true;
+        }
+        item.first.rotation.z += item.firstVelocity * frameSeconds;
+        item.second.rotation.z += item.secondVelocity * frameSeconds;
+      }
+
+      if (item.type === "projectile" && !item.landed) {
+        item.verticalVelocity -= (parameters.gravitation || 9.81) * frameSeconds * .035;
+        item.ball.position.x += item.horizontalVelocity * frameSeconds;
+        item.ball.position.y += item.verticalVelocity * frameSeconds;
+        item.points.push(item.ball.position.clone());
+        if (item.points.length > 60) item.points.shift();
+        const trailGeometry = new THREE.BufferGeometry().setFromPoints(item.points);
+        item.trail.geometry.dispose();
+        item.trail.geometry = trailGeometry;
+        if (item.ball.position.y <= -.9) {
+          item.ball.position.y = -.9;
+          item.landed = true;
         }
       }
 

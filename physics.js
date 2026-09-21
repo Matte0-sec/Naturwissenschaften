@@ -782,15 +782,59 @@
 
     else if (id === "drag") {
       const s = state;
+      const terminalVelocity = Math.sqrt(
+        2 * values.masse * 9.81 /
+        (1.225 * values.form * values.flaeche)
+      );
+      const heightMeters = Math.max(0, (380 - s.y) / 8);
+      const objectY = Math.min(370, s.y);
+
+      context.fillStyle = "#17353a";
+      context.fillRect(0, 375, 760, 45);
+      context.strokeStyle = "#63d6ce";
+      context.lineWidth = 1;
+      context.setLineDash([5, 7]);
+      for (let height = 0; height <= 40; height += 10) {
+        const y = 370 - height * 8;
+        context.beginPath();
+        context.moveTo(72, y);
+        context.lineTo(690, y);
+        context.stroke();
+        context.fillStyle = "#dfeee7";
+        context.fillText(`${height} m`, 18, y + 4);
+      }
+      context.setLineDash([]);
+
+      const windLength = Math.min(115, 12 + Math.abs(s.v) * 2.4);
+      context.strokeStyle = "rgba(99,214,206,.75)";
+      context.lineWidth = 3;
+      for (let offset = -54; offset <= 54; offset += 27) {
+        context.beginPath();
+        context.moveTo(515, objectY + offset);
+        context.lineTo(515 - windLength, objectY + offset);
+        context.stroke();
+      }
 
       ball(
         380,
-        Math.min(370, s.y),
-        22,
+        objectY,
+        Math.max(12, Math.min(34, 12 + Math.sqrt(values.flaeche) * 22)),
         "#f4be46"
       );
 
+      context.fillStyle = "#dfeee7";
+      context.font = "14px Space Grotesk";
+      context.fillText(
+        s.y >= 380 ? "Aufprall: Objekt ruht am Boden" : `Höhe: ${heightMeters.toFixed(1)} m`,
+        250,
+        38
+      );
+
+      context.fillStyle = "#63d6ce";
+      context.fillText(`Luftstrom: ${Math.min(100, s.v / terminalVelocity * 100).toFixed(0)} % der Endgeschwindigkeit`, 250, 62);
+
       measures = [
+        measurement("Höhe", heightMeters, "m"),
         measurement(
           "Fallgeschwindigkeit",
           s.v,
@@ -799,14 +843,7 @@
 
         measurement(
           "Endgeschwindigkeit",
-          Math.sqrt(
-            2 *
-            values.masse *
-            9.81 /
-            (1.225 *
-            values.form *
-            values.flaeche)
-          ),
+          terminalVelocity,
           "m/s"
         )
       ];

@@ -242,6 +242,37 @@ function makeOptics() {
 
 }
 
+function makeDrag() {
+
+  ground();
+
+  const objectRadius = Math.max(.35, Math.min(.85, .3 + Math.sqrt(parameters.flaeche || .25)));
+
+  mesh(new THREE.BoxGeometry(4.8, .22, 3.2), 0x405c60, [0, -1.82, 0]);
+
+  line([[-2.4, -1.7, 0], [-2.4, 4.5, 0]], 0x63d6ce);
+
+  for (let height = -1; height <= 4; height += 1) {
+
+    line([[-2.55, height, 0], [-2.2, height, 0]], 0xdfeee7);
+
+  }
+
+  const object = mesh(new THREE.SphereGeometry(objectRadius, 32, 24), 0xf4be46, [0, 4.25, 0], 0x6b4700);
+
+  const airflow = [];
+
+  for (let index = 0; index < 8; index += 1) {
+
+    const streak = line([[2.5, 3.8 - index, .35], [.9, 3.8 - index, .35]], 0x63d6ce);
+    airflow.push(streak);
+
+  }
+
+  movingObjects.push({ object, airflow, type: "fall", velocity: 0, grounded: false, radius: objectRadius });
+
+}
+
 function makeDefault() {
 
   ground();
@@ -275,6 +306,8 @@ function construct(id) {
 
   else if (id === "optics") makeOptics();
 
+  else if (id === "drag") makeDrag();
+
   else makeDefault();
 
 }
@@ -295,6 +328,8 @@ function animate(clock) {
 
     const elapsed = clock * .001;
 
+    const frameSeconds = Math.min(.05, (clock - (animate.previousClock || clock)) * .001);
+
     movingObjects.forEach((item) => {
 
       if (item.type === "orbit") { const speed = experimentId === "accelerator" ? .4 + (parameters.spannung || 10) / 100 : .15 + (parameters.geschwindigkeit || 3) / 14; item.object.position.set(Math.cos(elapsed * speed) * item.radius, item.tilted ? Math.sin(elapsed * speed * 1.7) * .6 : 0, Math.sin(elapsed * speed) * item.radius); }
@@ -305,6 +340,22 @@ function animate(clock) {
 
       if (item.type === "pendulum") { const amplitude = (parameters.winkel || 30) * Math.PI / 180; const speed = Math.sqrt((parameters.gravitation || 9.81) / 2.5); item.object.rotation.z = amplitude * Math.cos(elapsed * speed); item.child.rotation.z = amplitude * .72 * Math.sin(elapsed * speed * 1.61); }
 
+      if (item.type === "fall" && !item.grounded) {
+        const mass = Math.max(parameters.masse || 2, .1);
+        const drag = .5 * 1.225 * (parameters.form || .8) * (parameters.flaeche || .25) * item.velocity * Math.abs(item.velocity);
+        item.velocity += (9.81 - drag / mass) * frameSeconds;
+        item.object.position.y -= item.velocity * frameSeconds * .14;
+        item.object.rotation.x += frameSeconds * item.velocity * .8;
+        item.airflow.forEach((streak, index) => {
+          streak.position.y = ((elapsed * (1.5 + item.velocity / 12) + index * .8) % 6) - 3;
+          streak.material.opacity = Math.min(.9, .2 + item.velocity / 18);
+        });
+        if (item.object.position.y <= -1.25 + item.radius) {
+          item.object.position.y = -1.25 + item.radius;
+          item.grounded = true;
+        }
+      }
+
       if (item.type === "spin") item.object.rotation.y += .012;
 
     });
@@ -312,6 +363,8 @@ function animate(clock) {
     if (waveMesh) { const position = waveMesh.geometry.attributes.position; const frequency = parameters.frequenz || 1; const amplitude = (parameters.amplitude || 20) / 100; const speed = parameters.geschwindigkeit || 4; for (let index = 0; index < position.count; index += 1) { const x = position.getX(index); position.setZ(index, amplitude * Math.sin(x * frequency * 1.7 - elapsed * speed) + amplitude * .55 * Math.sin((10 - x) * frequency * 1.7 - elapsed * speed)); } position.needsUpdate = true; waveMesh.geometry.computeVertexNormals(); }
 
   }
+
+  animate.previousClock = clock;
 
   renderer.render(scene, camera);
 

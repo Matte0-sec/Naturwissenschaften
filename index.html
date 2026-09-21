@@ -16,6 +16,14 @@
       <p class="eyebrow">Virtuelles Naturwissenschaftslabor</p>
       <h1 id="homeTitle">Wähle dein<br><span>Experiment.</span></h1>
       <p class="home-intro">Untersuche physikalische Energie, chemische Reaktionen oder biologische Systeme in einer interaktiven Simulation.</p>
+      <section class="learning-profile" aria-labelledby="profileTitle">
+        <div><p class="eyebrow">Lernmodus</p><h2 id="profileTitle">Wie möchtest du lernen?</h2></div>
+        <div class="profile-options" role="group" aria-label="Schwierigkeitsgrad auswählen">
+          <button class="profile-option active" type="button" data-profile="school"><b>Schule</b><small>Klare Erklärungen &amp; Leitfragen</small></button>
+          <button class="profile-option" type="button" data-profile="basic"><b>Grundlagen</b><small>Selbstständig experimentieren</small></button>
+          <button class="profile-option" type="button" data-profile="expert"><b>Expert:in</b><small>Fachsprache &amp; Analysefragen</small></button>
+        </div>
+      </section>
       <div class="subject-choices">
         <button class="subject-card physics-card" type="button" data-mode="physics">
           <span class="subject-symbol">F</span><span><b>Physik</b><small>Wärme & Teilchenenergie</small></span><em>→</em>
@@ -61,7 +69,7 @@
             </div>
             <div id="bioMeasurements" class="measurements"></div>
             <div class="simulation-bottom"><div id="bioControls" class="parameter-controls"></div><div class="chart-panel"><span>Verlauf</span><canvas id="bioChart" width="330" height="150" aria-label="Biologie Diagramm"></canvas></div></div>
-            <div class="challenge"><b>Was passiert, wenn ...?</b><span id="bioChallenge"></span><small>Stufe: Grundlagen</small></div>
+            <div class="challenge"><b>Was passiert, wenn ...?</b><span id="bioChallenge"></span><small id="bioLevel">Stufe: Grundlagen</small></div>
           </div>
         </section>
       </div>
@@ -123,7 +131,7 @@
             <canvas id="chemistryCanvas" width="760" height="420" aria-label="Chemie-Simulation"></canvas>
             <div id="chemMeasurements" class="measurements"></div>
             <div class="simulation-bottom"><div id="chemControls" class="parameter-controls"></div><div class="chart-panel"><span>Verlauf</span><canvas id="chemChart" width="330" height="150" aria-label="Chemie Diagramm"></canvas></div></div>
-            <div class="challenge"><b>Was passiert, wenn ...?</b><span id="chemChallenge"></span><small>Stufe: Grundlagen</small></div>
+            <div class="challenge"><b>Was passiert, wenn ...?</b><span id="chemChallenge"></span><small id="chemLevel">Stufe: Grundlagen</small></div>
           </div>
         </section>
       </div>

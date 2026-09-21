@@ -27,6 +27,31 @@ let elapsed = 0;
 let timerId;
 let mode = "physics";
 
+const learningProfiles = {
+  school: {
+    name: "Schule",
+    explanation: (text) => `Schulmodus: ${text.split(". ")[0]}. Beobachte danach die Anzeige und vergleiche jeweils nur eine Einstellung.`,
+    question: (text) => `Arbeitsauftrag: ${text}`,
+  },
+  basic: {
+    name: "Grundlagen",
+    explanation: (text) => text,
+    question: (text) => text,
+  },
+  expert: {
+    name: "Expert:in",
+    explanation: (text) => `Expertenmodus: ${text} Bewerte zusätzlich Modellannahmen, Skalierung und mögliche systematische Abweichungen der Simulation.`,
+    question: (text) => `Analysefrage: ${text} Begründe die Beobachtung mit den relevanten Zustandsgrößen und ihrer Abhängigkeit.`,
+  },
+};
+
+let learningProfile = "school";
+window.labTeaching = {
+  explanation(text) { return learningProfiles[learningProfile].explanation(text); },
+  question(text) { return learningProfiles[learningProfile].question(text); },
+  level() { return learningProfiles[learningProfile].name; },
+};
+
 function getValues() {
   const heat = mode === "physics" ? Number(controls.heat.value) : 0;
   const acid = mode === "chemistry" ? Number(controls.acid.value) : 0;
@@ -134,6 +159,10 @@ Object.values(controls).forEach((control) => control.addEventListener("input", u
 document.querySelector("#startButton").addEventListener("click", startExperiment);
 document.querySelector("#resetButton").addEventListener("click", resetExperiment);
 document.querySelectorAll("[data-mode]").forEach((button) => button.addEventListener("click", () => selectMode(button.dataset.mode)));
+document.querySelectorAll("[data-profile]").forEach((button) => button.addEventListener("click", () => {
+  learningProfile = button.dataset.profile;
+  document.querySelectorAll("[data-profile]").forEach((item) => item.classList.toggle("active", item === button));
+}));
 document.querySelector("#homeButton").addEventListener("click", () => {
   resetExperiment();
   document.querySelector("#labScreen").hidden = true;

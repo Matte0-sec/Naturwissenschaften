@@ -105,7 +105,8 @@
     $("#simCategory").textContent = selected.category;
     $("#simTitle").textContent = selected.title;
     $("#simDescription").textContent = selected.description;
-    $("#simChallenge").textContent = selected.challenge;
+    $("#simChallenge").textContent = window.labTeaching?.question(selected.challenge) || selected.challenge;
+    $("#levelLabel").textContent = `Stufe: ${window.labTeaching?.level() || difficulty}`;
 
     $("#parameterControls").innerHTML =
       selected.controls.map(controlMarkup).join("");
@@ -142,7 +143,7 @@
   }
 
   function initialState(id) {
-    $("#simExplanation").textContent = explanations[id];
+    $("#simExplanation").textContent = window.labTeaching?.explanation(explanations[id]) || explanations[id];
 
     if (id === "gravity")
       return {

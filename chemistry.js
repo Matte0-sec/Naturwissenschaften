@@ -37,7 +37,8 @@
     const gasConstant = 8.314462618;
     const faraday = 96485.33212;
     const progress = Math.min(1, time / 8);
-    $("#chemExplanation").textContent = window.labTeaching?.explanation(explanations[id]) || explanations[id];
+    if (window.labTeaching?.renderExplanation) window.labTeaching.renderExplanation("#chemExplanation", explanations[id]);
+    else $("#chemExplanation").textContent = explanations[id];
 
     if (id === "titration") {
       const acidMoles = values.saeure / 1000 * values.konz;

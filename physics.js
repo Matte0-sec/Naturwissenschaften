@@ -143,7 +143,8 @@
   }
 
   function initialState(id) {
-    $("#simExplanation").textContent = window.labTeaching?.explanation(explanations[id]) || explanations[id];
+    if (window.labTeaching?.renderExplanation) window.labTeaching.renderExplanation("#simExplanation", explanations[id]);
+    else $("#simExplanation").textContent = explanations[id];
 
     if (id === "gravity")
       return {

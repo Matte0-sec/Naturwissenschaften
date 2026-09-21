@@ -27,11 +27,30 @@ let elapsed = 0;
 let timerId;
 let mode = "physics";
 
+function schoolTopic(text) {
+  if (/Säure|Metalle|Lauge|pH/i.test(text)) return "Du siehst, wie eine Flüssigkeit Dinge verändern kann.";
+  if (/Pflanz|Licht|Glucose|Sauerstoff/i.test(text)) return "Du siehst, was eine Pflanze mit Licht machen kann.";
+  if (/Zell|Enzym|DNA|Körper|Population/i.test(text)) return "Du siehst, wie kleine Teile von Lebewesen zusammenarbeiten.";
+  if (/Wärme|Temperatur/i.test(text)) return "Du siehst, wie Wärme von einem Ort zum anderen wandert.";
+  if (/Strom|Batterie|Spule/i.test(text)) return "Du siehst, wie Strom Dinge bewegen oder verändern kann.";
+  if (/Schwerkraft|Planet|Rakete|Bahn/i.test(text)) return "Du siehst, wie Dinge sich durch Schwerkraft bewegen.";
+  if (/Welle|Lichtstrahl|Linse|Spiegel/i.test(text)) return "Du siehst, wie sich Wellen oder Licht bewegen.";
+  return "Du siehst, wie eine Änderung eine andere Sache beeinflusst.";
+}
+
+function schoolExplanation(text) {
+  return `${schoolTopic(text)} Stell an einem Regler und schau auf das Bild und die Zahlen.`;
+}
+
+function schoolDetail(text) {
+  return `${schoolTopic(text)} So probierst du es aus: Ändere nur einen Regler. Warte kurz und vergleiche dann Bild und Zahlen mit vorher.`;
+}
+
 const learningProfiles = {
   school: {
     name: "Schule",
-    explanation: (text) => `Schulmodus: ${text.split(". ")[0]}. Beobachte danach die Anzeige und vergleiche jeweils nur eine Einstellung.`,
-    question: (text) => `Arbeitsauftrag: ${text}`,
+    explanation: schoolExplanation,
+    question: () => "Arbeitsauftrag: Ändere nur einen Regler. Was verändert sich im Bild und bei den Zahlen?",
   },
   basic: {
     name: "Grundlagen",
@@ -50,6 +69,32 @@ window.labTeaching = {
   explanation(text) { return learningProfiles[learningProfile].explanation(text); },
   question(text) { return learningProfiles[learningProfile].question(text); },
   level() { return learningProfiles[learningProfile].name; },
+  renderExplanation(targetId, text) {
+    const target = document.querySelector(targetId);
+    if (!target) return;
+    target.textContent = learningProfiles[learningProfile].explanation(text);
+    const box = target.closest(".explanation-box");
+    const heading = box.querySelector("h3");
+    let button = heading.querySelector(".school-info-button");
+    let detail = box.querySelector(".school-info-detail");
+    if (!button) {
+      button = document.createElement("button");
+      button.className = "school-info-button";
+      button.type = "button";
+      button.textContent = "ⓘ";
+      button.setAttribute("aria-label", "Einfache Erklärung mit Beispiel anzeigen");
+      heading.append(button);
+      detail = document.createElement("p");
+      detail.className = "school-info-detail";
+      detail.hidden = true;
+      box.append(detail);
+      button.addEventListener("click", () => { detail.hidden = !detail.hidden; });
+    }
+    const isSchool = learningProfile === "school";
+    button.hidden = !isSchool;
+    detail.hidden = true;
+    if (isSchool) detail.textContent = `Mehr dazu: ${schoolDetail(text)}`;
+  },
 };
 
 function getValues() {

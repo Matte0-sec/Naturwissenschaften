@@ -6,31 +6,31 @@
   const chartContext = chart.getContext("2d");
 
   const experimentList = [
-    ["accelerator", "Teilchenbeschleuniger", "Moderne Physik", "Teilchen werden durch ein Magnetfeld auf Kreisbahnen gelenkt.", "Erhöhe die Spannung: Wie ändert sich die Teilchenenergie?", [["spannung", "Beschleunigungsspannung", 10, 400, 160, "kV"], ["feld", "Magnetfeld", 0.1, 2.5, 1, "T"]]],
+    ["accelerator", "Teilchenbeschleuniger", "Technik", "Teilchen werden durch ein Magnetfeld auf Kreisbahnen gelenkt.", "Erhöhe die Spannung: Wie ändert sich die Teilchenenergie?", [["spannung", "Beschleunigungsspannung", 10, 400, 160, "kV"], ["feld", "Magnetfeld", 0.1, 2.5, 1, "T"]]],
 
-    ["electricity", "Elektrizität", "Elektrizität", "Ohmsches Gesetz, elektrische Leistung und ein steuerbarer Kurzschluss.", "Was passiert bei halbiertem Widerstand?", [["spannung", "Batteriespannung", 1, 24, 12, "V"], ["widerstand", "Widerstand", 1, 100, 20, "Ω"], ["kurz", "Kurzschluss", 0, 1, 0, "aus"]]],
+    ["electricity", "Elektrizität", "Technik", "Ohmsches Gesetz, elektrische Leistung und ein steuerbarer Kurzschluss.", "Was passiert bei halbiertem Widerstand?", [["spannung", "Batteriespannung", 1, 24, 12, "V"], ["widerstand", "Widerstand", 1, 100, 20, "Ω"], ["kurz", "Kurzschluss", 0, 1, 0, "aus"]]],
 
-    ["magnetism", "Elektromagnet", "Magnetismus", "Eine Spule erzeugt ein Magnetfeld. Seine Stärke hängt von Strom und Windungen ab.", "Wie verdoppelt sich das Feld bei doppelter Windungszahl?", [["strom", "Stromstärke", 0, 10, 3, "A"], ["windungen", "Spulenanzahl", 10, 300, 100, ""], ["abstand", "Eisenabstand", 1, 20, 8, "cm"]]],
+    ["magnetism", "Elektromagnet", "Technik", "Eine Spule erzeugt ein Magnetfeld. Seine Stärke hängt von Strom und Windungen ab.", "Wie verdoppelt sich das Feld bei doppelter Windungszahl?", [["strom", "Stromstärke", 0, 10, 3, "A"], ["windungen", "Spulenanzahl", 10, 300, 100, ""], ["abstand", "Eisenabstand", 1, 20, 8, "cm"]]],
 
     ["gravity", "Orbitale Gravitation", "Astronomie", "Eine numerische Bahnrechnung nach Newton: $F = GmM/r²$.", "Welche Anfangsgeschwindigkeit führt zu einer stabilen Umlaufbahn?", [["masse", "Planetenmasse", 0.5, 3, 1, "M⊕"], ["abstand", "Startabstand", 1.2, 4, 2, "R⊕"], ["geschwindigkeit", "Startgeschwindigkeit", 3, 13, 7.9, "km/s"]]],
 
-    ["rocket", "Raketenstart", "Mechanik", "Schub, Gewichtskraft, Luftwiderstand und abnehmende Treibstoffmasse bestimmen den Flug.", "Reicht der Schub zum Abheben?", [["schub", "Schub", 100, 1200, 500, "kN"], ["masse", "Startmasse", 20, 150, 60, "t"], ["treibstoff", "Treibstoff", 5, 100, 35, "t"]]],
+    ["rocket", "Raketenstart", "Technik", "Schub, Gewichtskraft, Luftwiderstand und abnehmende Treibstoffmasse bestimmen den Flug.", "Reicht der Schub zum Abheben?", [["schub", "Schub", 100, 1200, 500, "kN"], ["masse", "Startmasse", 20, 150, 60, "t"], ["treibstoff", "Treibstoff", 5, 100, 35, "t"]]],
 
-    ["drag", "Luftwiderstand", "Mechanik", "Der Luftwiderstand wächst quadratisch mit der Geschwindigkeit: $Fₐ = ½ρcᵥAv²$.", "Welche Form erreicht die höhere Endgeschwindigkeit?", [["masse", "Masse", 0.1, 20, 2, "kg"], ["form", "Luftwiderstand cᵥ", 0.1, 1.4, 0.8, ""], ["flaeche", "Fläche", 0.01, 1, 0.25, "m²"]]],
+    ["drag", "Luftwiderstand", "Grundlagen der Physik", "Der Luftwiderstand wächst quadratisch mit der Geschwindigkeit: $Fₐ = ½ρcᵥAv²$.", "Welche Form erreicht die höhere Endgeschwindigkeit?", [["masse", "Masse", 0.1, 20, 2, "kg"], ["form", "Luftwiderstand cᵥ", 0.1, 1.4, 0.8, ""], ["flaeche", "Fläche", 0.01, 1, 0.25, "m²"]]],
 
-    ["waves", "Wasserwellen", "Wellen", "Zwei harmonische Wellen überlagern sich. Ein Rand reflektiert die Welle.", "Wo entsteht konstruktive Interferenz?", [["frequenz", "Frequenz", 0.2, 4, 1.2, "Hz"], ["amplitude", "Amplitude", 5, 60, 28, "px"], ["geschwindigkeit", "Wellengeschwindigkeit", 1, 12, 5, "m/s"]]],
+    ["waves", "Wasserwellen", "Grundlagen der Physik", "Zwei harmonische Wellen überlagern sich. Ein Rand reflektiert die Welle.", "Wo entsteht konstruktive Interferenz?", [["frequenz", "Frequenz", 0.2, 4, 1.2, "Hz"], ["amplitude", "Amplitude", 5, 60, 28, "px"], ["geschwindigkeit", "Wellengeschwindigkeit", 1, 12, 5, "m/s"]]],
 
-    ["heat", "Wärmeübertragung", "Thermodynamik", "Wärme fließt vom warmen zum kalten Körper, bis beide die gleiche Temperatur haben.", "Wie wirkt eine größere Temperaturdifferenz?", [["heiss", "Warmer Körper", 30, 150, 100, "°C"], ["kalt", "Kalter Körper", -10, 50, 15, "°C"], ["leitung", "Wärmeleitung", 0.1, 3, 1, "W/K"]]],
+    ["heat", "Wärmeübertragung", "Grundlagen der Physik", "Wärme fließt vom warmen zum kalten Körper, bis beide die gleiche Temperatur haben.", "Wie wirkt eine größere Temperaturdifferenz?", [["heiss", "Warmer Körper", 30, 150, 100, "°C"], ["kalt", "Kalter Körper", -10, 50, 15, "°C"], ["leitung", "Wärmeleitung", 0.1, 3, 1, "W/K"]]],
 
-    ["collision", "Kollisionen", "Mechanik", "Impuls bleibt erhalten. Der Stoßfaktor bestimmt, wie elastisch die Kugeln kollidieren.", "Wie unterscheiden sich elastischer und unelastischer Stoß?", [["masse1", "Masse Kugel A", 1, 10, 3, "kg"], ["masse2", "Masse Kugel B", 1, 10, 5, "kg"], ["tempo1", "Geschwindigkeit A", 0.5, 12, 5, "m/s"], ["tempo2", "Geschwindigkeit B", -8, -0.5, -2, "m/s"], ["elastizitaet", "Stoßfaktor", 0, 1, 0.85, ""]]],
+    ["collision", "Kollisionen", "Grundlagen der Physik", "Impuls bleibt erhalten. Der Stoßfaktor bestimmt, wie elastisch die Kugeln kollidieren.", "Wie unterscheiden sich elastischer und unelastischer Stoß?", [["masse1", "Masse Kugel A", 1, 10, 3, "kg"], ["masse2", "Masse Kugel B", 1, 10, 5, "kg"], ["tempo1", "Geschwindigkeit A", 0.5, 12, 5, "m/s"], ["tempo2", "Geschwindigkeit B", -8, -0.5, -2, "m/s"], ["elastizitaet", "Stoßfaktor", 0, 1, 0.85, ""]]],
 
-    ["pendulum", "Doppelpendel", "Chaotische Systeme", "Zwei gekoppelte Pendel folgen nichtlinearer Bewegung. Kleine Änderungen können große Folgen haben.", "Was ändert ein kleiner anderer Startwinkel?", [["winkel", "Anfangswinkel", 5, 170, 120, "°"], ["gravitation", "Gravitation", 1, 20, 9.81, "m/s²"], ["spur", "Spurlänge", 20, 250, 120, ""]]],
+    ["pendulum", "Doppelpendel", "Grundlagen der Physik", "Zwei gekoppelte Pendel folgen nichtlinearer Bewegung. Kleine Änderungen können große Folgen haben.", "Was ändert ein kleiner anderer Startwinkel?", [["winkel", "Anfangswinkel", 5, 170, 120, "°"], ["gravitation", "Gravitation", 1, 20, 9.81, "m/s²"], ["spur", "Spurlänge", 20, 250, 120, ""]]],
 
     ["blackhole", "Schwarzes Loch", "Astronomie", "Vereinfachtes Newton-Modell: Es zeigt starke Gravitation, keine vollständige Relativitätstheorie.", "Welche Bahn wird bei höherer Masse stärker gekrümmt?", [["masse", "Masse", 1, 20, 6, "M☉"], ["abstand", "Startabstand", 40, 180, 120, "px"], ["geschwindigkeit", "Startgeschwindigkeit", 1, 12, 6, "km/s"]]],
 
-    ["optics", "Optik-Labor", "Optik", "Lichtstrahlen werden am Spiegel reflektiert und an einer Sammellinse gebrochen.", "Wo liegt der Brennpunkt bei kleinerer Brennweite?", [["brennweite", "Brennweite", 40, 240, 120, "mm"], ["winkel", "Laserwinkel", -20, 20, 0, "°"], ["modus", "Linse / Spiegel", 0, 1, 0, "Linse"]]],
+    ["optics", "Optik-Labor", "Technik", "Lichtstrahlen werden am Spiegel reflektiert und an einer Sammellinse gebrochen.", "Wo liegt der Brennpunkt bei kleinerer Brennweite?", [["brennweite", "Brennweite", 40, 240, 120, "mm"], ["winkel", "Laserwinkel", -20, 20, 0, "°"], ["modus", "Linse / Spiegel", 0, 1, 0, "Linse"]]],
 
-    ["projectile", "Projektilbewegung", "Mechanik", "Ohne Luftwiderstand ist die Flugbahn eine Parabel. Schwerkraft wirkt konstant nach unten.", "Bei welchem Winkel ist die Reichweite maximal?", [["winkel", "Abschusswinkel", 5, 85, 45, "°"], ["tempo", "Startgeschwindigkeit", 5, 100, 45, "m/s"], ["gravitation", "Gravitation", 1, 20, 9.81, "m/s²"]]]
+    ["projectile", "Projektilbewegung", "Grundlagen der Physik", "Ohne Luftwiderstand ist die Flugbahn eine Parabel. Schwerkraft wirkt konstant nach unten.", "Bei welchem Winkel ist die Reichweite maximal?", [["winkel", "Abschusswinkel", 5, 85, 45, "°"], ["tempo", "Startgeschwindigkeit", 5, 100, 45, "m/s"], ["gravitation", "Gravitation", 1, 20, 9.81, "m/s²"]]]
   ];
 
   const experiments = Object.fromEntries(
@@ -1081,11 +1081,11 @@
   function buildCatalog() {
     const categories = [
       "Alle",
-      ...new Set(
-        experimentList.map(
-          ([, , category]) => category
-        )
-      )
+      "Astronomie",
+      "Geologie",
+      "Meteorologie",
+      "Technik",
+      "Grundlagen der Physik"
     ];
 
     $("#categoryFilters").innerHTML =

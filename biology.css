@@ -2,4 +2,8 @@
 .biology-card { background: #b9d983; }
 #biologyCanvas { width: 100%; height: auto; display: block; border: 1px solid #284147; background: #0d2227; }
 .biology-explanation { border-color: #5d8b3c; background: #eef6d6; }
+.radiation-types { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin: 10px 0; padding: 9px 11px; border: 1px solid #a7b7a2; background: #edf5e0; }
+.radiation-types span { margin-right: 5px; color: #456334; font: 11px "DM Mono", monospace; text-transform: uppercase; }
+.radiation-types button { padding: 6px 10px; color: #253721; background: #d9e7c6; border: 1px solid #9eb58a; font: 11px "DM Mono", monospace; }
+.radiation-types button.active { color: white; background: #5d8b3c; border-color: #456a2e; }
 @media (max-width: 900px) { .subject-choices { grid-template-columns: 1fr; } }

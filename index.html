@@ -49,7 +49,16 @@
             <div class="simulation-title"><div><p class="eyebrow" id="bioCategory"></p><h2 id="bioTitle"></h2></div><div class="simulation-actions"><button id="bioStart" class="primary-button" type="button">Start</button><button id="bioPause" class="tool-button" type="button" title="Pausieren">Ⅱ</button><button id="bioReset" class="tool-button" type="button" title="Zurücksetzen">↺</button></div></div>
             <p id="bioDescription" class="sim-description"></p>
             <section class="explanation-box biology-explanation" aria-label="Erklärung zum Biologieexperiment"><h3>Was passiert?</h3><p id="bioExplanation"></p></section>
+            <div class="visual-mode"><span>Ansicht</span><button id="bioTwoDimensional" class="active" type="button">2D</button><button id="bioThreeDimensional" type="button">3D</button></div>
+            <div id="biologyThreeViewport" class="three-viewport" hidden aria-label="Dreidimensionale Darstellung des Biologie-Experiments"></div>
             <canvas id="biologyCanvas" width="760" height="420" aria-label="Biologie-Simulation"></canvas>
+            <div id="bioRadiationTypes" class="radiation-types" hidden aria-label="Art der ionisierenden Strahlung">
+              <span>Strahlungsart</span>
+              <button class="active" type="button" data-radiation-type="gamma">Gamma</button>
+              <button type="button" data-radiation-type="alpha">Alpha</button>
+              <button type="button" data-radiation-type="beta">Beta</button>
+              <button type="button" data-radiation-type="xray">Röntgen</button>
+            </div>
             <div id="bioMeasurements" class="measurements"></div>
             <div class="simulation-bottom"><div id="bioControls" class="parameter-controls"></div><div class="chart-panel"><span>Verlauf</span><canvas id="bioChart" width="330" height="150" aria-label="Biologie Diagramm"></canvas></div></div>
             <div class="challenge"><b>Was passiert, wenn ...?</b><span id="bioChallenge"></span><small>Stufe: Grundlagen</small></div>
@@ -184,6 +193,7 @@
   <script src="physics.js"></script>
   <script src="chemistry.js"></script>
   <script src="biology.js"></script>
+  <script type="module" src="biology-three.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

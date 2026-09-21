@@ -8,13 +8,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="biology.css" />
 </head>
 <body>
   <main class="app-shell">
     <section id="homeScreen" class="home-screen" aria-labelledby="homeTitle">
       <p class="eyebrow">Virtuelles Naturwissenschaftslabor</p>
       <h1 id="homeTitle">Wähle dein<br><span>Experiment.</span></h1>
-      <p class="home-intro">Untersuche physikalische Energie oder chemische Reaktionen in einer interaktiven Simulation.</p>
+      <p class="home-intro">Untersuche physikalische Energie, chemische Reaktionen oder biologische Systeme in einer interaktiven Simulation.</p>
       <div class="subject-choices">
         <button class="subject-card physics-card" type="button" data-mode="physics">
           <span class="subject-symbol">F</span><span><b>Physik</b><small>Wärme & Teilchenenergie</small></span><em>→</em>
@@ -22,6 +23,38 @@
         <button class="subject-card chemistry-card" type="button" data-mode="chemistry">
           <span class="subject-symbol">H+</span><span><b>Chemie</b><small>Säuren, Laugen & pH-Wert</small></span><em>→</em>
         </button>
+        <button class="subject-card biology-card" type="button" data-mode="biology">
+          <span class="subject-symbol">DNA</span><span><b>Biologie</b><small>Zellen, Energie & Ökosysteme</small></span><em>→</em>
+        </button>
+      </div>
+    </section>
+
+    <section id="biologyPlatform" class="physics-platform biology-platform" hidden aria-labelledby="biologyPlatformTitle">
+      <header class="platform-header">
+        <div>
+          <button id="biologyHomeButton" class="back-button" type="button">← Fächerwahl</button>
+          <p class="eyebrow">Biologie Labor</p>
+          <h1 id="biologyPlatformTitle">Leben <span>&</span> Systeme</h1>
+        </div>
+        <label class="search-box" for="biologySearch">⌕ <input id="biologySearch" type="search" placeholder="Experiment suchen" /></label>
+      </header>
+      <div class="platform-layout biology-layout">
+        <aside class="catalog-panel">
+          <div class="category-filters" id="biologyFilters"></div>
+          <div class="experiment-cards" id="biologyCards"></div>
+        </aside>
+        <section class="simulation-workspace" aria-live="polite">
+          <div id="biologyEmpty" class="simulation-empty"><span>DNA</span><h2>Wähle ein Experiment</h2><p>Verändere Umweltbedingungen und beobachte biologische Prozesse in Echtzeit.</p></div>
+          <div id="biologyPanel" hidden>
+            <div class="simulation-title"><div><p class="eyebrow" id="bioCategory"></p><h2 id="bioTitle"></h2></div><div class="simulation-actions"><button id="bioStart" class="primary-button" type="button">Start</button><button id="bioPause" class="tool-button" type="button" title="Pausieren">Ⅱ</button><button id="bioReset" class="tool-button" type="button" title="Zurücksetzen">↺</button></div></div>
+            <p id="bioDescription" class="sim-description"></p>
+            <section class="explanation-box biology-explanation" aria-label="Erklärung zum Biologieexperiment"><h3>Was passiert?</h3><p id="bioExplanation"></p></section>
+            <canvas id="biologyCanvas" width="760" height="420" aria-label="Biologie-Simulation"></canvas>
+            <div id="bioMeasurements" class="measurements"></div>
+            <div class="simulation-bottom"><div id="bioControls" class="parameter-controls"></div><div class="chart-panel"><span>Verlauf</span><canvas id="bioChart" width="330" height="150" aria-label="Biologie Diagramm"></canvas></div></div>
+            <div class="challenge"><b>Was passiert, wenn ...?</b><span id="bioChallenge"></span><small>Stufe: Grundlagen</small></div>
+          </div>
+        </section>
       </div>
     </section>
 
@@ -150,6 +183,7 @@
   <script type="module" src="three-physics.js"></script>
   <script src="physics.js"></script>
   <script src="chemistry.js"></script>
+  <script src="biology.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

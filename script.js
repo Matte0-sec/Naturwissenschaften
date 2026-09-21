@@ -109,6 +109,10 @@ function selectMode(selectedMode) {
     window.openChemistryPlatform();
     return;
   }
+  if (selectedMode === "biology") {
+    window.openBiologyPlatform();
+    return;
+  }
   resetExperiment();
   mode = selectedMode;
   document.body.dataset.mode = mode;

@@ -1,0 +1,5 @@
+.subject-choices { grid-template-columns: repeat(3, 1fr); }
+.biology-card { background: #b9d983; }
+#biologyCanvas { width: 100%; height: auto; display: block; border: 1px solid #284147; background: #0d2227; }
+.biology-explanation { border-color: #5d8b3c; background: #eef6d6; }
+@media (max-width: 900px) { .subject-choices { grid-template-columns: 1fr; } }

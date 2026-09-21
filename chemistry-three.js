@@ -59,7 +59,22 @@ function sample(x, scale, color, damaged = false) {
   }
 }
 
-function build(materialName, initialMass, remainingMass) {
+function cellTissue(x, functional) {
+  const damaged = Math.round(12 * (1 - functional / 100));
+  for (let index = 0; index < 12; index += 1) {
+    const column = index % 4;
+    const row = Math.floor(index / 4);
+    const impaired = index < damaged;
+    const cellX = x - .9 + column * .6;
+    const cellY = -.15 + (1 - row) * .62;
+    const membrane = add(new THREE.SphereGeometry(.22, 18, 14), material(impaired ? 0xe76f51 : 0x75c6b5, impaired ? 0x50130d : 0x124a42), [cellX, cellY, 0]);
+    membrane.scale.y = 1.12;
+    const nucleus = add(new THREE.SphereGeometry(.09, 14, 12), material(impaired ? 0x421e22 : 0x405c9d, impaired ? 0x21090b : 0x111b52), [cellX, cellY, .19]);
+    if (impaired) add(new THREE.SphereGeometry(.045, 10, 8), material(0xf4be46, 0x7a4800), [cellX + .08, cellY - .04, .25]);
+  }
+}
+
+function build(materialName, initialMass, remainingMass, functional) {
   clear();
   const materials = {
     magnesium: { color: 0xdfeee7, reactive: true },
@@ -68,6 +83,16 @@ function build(materialName, initialMass, remainingMass) {
     copper: { color: 0xe76f51, reactive: false },
   };
   const selected = materials[materialName] || materials.magnesium;
+  if (materialName === "cells") {
+    const functionValue = functional ?? 100;
+    labels.innerHTML = `<span>Vor der Säure<br><b>12 / 12 aktiv</b></span><span>Nach der Säure<br><b>${functionValue.toFixed(1)} % aktiv</b><small>${Math.round(12 * (1 - functionValue / 100))} von 12 geschädigt</small></span>`;
+    platform(-3.1);
+    platform(3.1);
+    cellTissue(-3.1, 100);
+    cellTissue(3.1, functionValue);
+    reactive = false;
+    return;
+  }
   reactive = selected.reactive && remainingMass < initialMass;
   const lossPercent = Math.max(0, (1 - remainingMass / initialMass) * 100);
   const afterScale = Math.max(.16, 1 - lossPercent / 18);
@@ -111,8 +136,8 @@ function animate(now) {
 }
 
 window.chemistry3d = {
-  compare(materialName, initialMass, remainingMass) {
-    build(materialName, initialMass, remainingMass);
+  compare(materialName, initialMass, remainingMass, functional) {
+    build(materialName, initialMass, remainingMass, functional);
     resize();
   },
   setRunning(value) { running = value; },

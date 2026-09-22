@@ -24,6 +24,11 @@ let cells = [];
 let rays = [];
 let photons = [];
 let shield;
+let virusCells = [];
+let virusParticles = [];
+let virusOrgans = [];
+let virusLesions = [];
+let inflammation;
 
 function material(color, glow = 0x000000) {
   return new THREE.MeshStandardMaterial({ color, emissive: glow, emissiveIntensity: glow ? .9 : 0, roughness: .38, metalness: .16 });
@@ -49,6 +54,11 @@ function clear() {
   rays = [];
   photons = [];
   shield = undefined;
+  virusCells = [];
+  virusParticles = [];
+  virusOrgans = [];
+  virusLesions = [];
+  inflammation = undefined;
 }
 
 function createRadiationScene() {
@@ -104,10 +114,64 @@ function createFallback() {
   addMesh(new THREE.SphereGeometry(2.4, 38, 28), 0x5d8b3c, [0, 0, 0], 0x254814);
 }
 
+function createVirusScene() {
+  const organ = parameters.organ || "lung";
+  const virus = parameters.virus || "influenza";
+  const organColors = { lung: 0xe99b9b, liver: 0xa85d45, heart: 0xd45b5b, brain: 0xd8af9b };
+  const virusColors = { influenza: 0x63d6ce, corona: 0x4c9be8, hepatitis: 0xf4be46, coxsackie: 0xe76f51, zika: 0xa582d8 };
+  const organColor = organColors[organ];
+  const virusColor = virusColors[virus];
+
+  if (organ === "lung") {
+    virusOrgans.push(addMesh(new THREE.SphereGeometry(1.45, 32, 24), organColor, [-.9, 0, 0], 0x5c1818));
+    virusOrgans.push(addMesh(new THREE.SphereGeometry(1.45, 32, 24), organColor, [.9, 0, 0], 0x5c1818));
+    line([[0, 2.4, 0], [0, .5, 0], [-.65, .05, 0]], 0xdfeee7);
+    line([[0, .5, 0], [.65, .05, 0]], 0xdfeee7);
+  } else if (organ === "liver") {
+    const liver = addMesh(new THREE.SphereGeometry(2.35, 1.25, 1.05, 38, 24), organColor, [0, 0, 0], 0x512116);
+    virusOrgans.push(liver);
+    liver.scale.set(1, .65, 1);
+  }
+  else if (organ === "heart") {
+    const heart = addMesh(new THREE.SphereGeometry(1.55, 32, 24), organColor, [0, 0, 0], 0x611619); virusOrgans.push(heart);
+    heart.scale.set(.82, 1.05, .75); heart.rotation.z = -.25;
+  } else {
+    const brain = addMesh(new THREE.SphereGeometry(2.25, 38, 28), organColor, [0, 0, 0], 0x6d4538); virusOrgans.push(brain); brain.scale.set(1.1, .72, .82);
+    for (let index = -2; index <= 2; index += 1) line([[-1.7, index * .42, .75], [1.7, index * .42, .75]], 0x9f7968, .55);
+  }
+
+  for (let index = 0; index < 34; index += 1) {
+    const angle = index * 2.4;
+    const radius = .35 + (index % 6) * .28;
+    const cell = addMesh(new THREE.SphereGeometry(.12, 14, 12), 0x87b85c, [Math.cos(angle) * radius, Math.sin(angle) * radius * .7, .9], 0x214a18);
+    virusCells.push(cell);
+  }
+  const virusGeometry = {
+    influenza: new THREE.SphereGeometry(.14, 16, 12),
+    corona: new THREE.IcosahedronGeometry(.15, 1),
+    hepatitis: new THREE.CylinderGeometry(.11, .11, .25, 6),
+    coxsackie: new THREE.DodecahedronGeometry(.14, 0),
+    zika: new THREE.ConeGeometry(.14, .28, 12),
+  }[virus];
+  for (let index = 0; index < 12; index += 1) {
+    const particle = addMesh(virusGeometry, virusColor, [-4 + index * .24, -1.6 + index % 4 * .65, 1], virusColor);
+    virusParticles.push({ object: particle, offset: index / 12 });
+  }
+
+  inflammation = addMesh(new THREE.SphereGeometry(2.7, 36, 24), 0xe76f51, [0, 0, -.2], 0x641208);
+  inflammation.material.transparent = true;
+  inflammation.material.opacity = 0;
+  for (let index = 0; index < 9; index += 1) {
+    const lesion = addMesh(new THREE.SphereGeometry(.2, 16, 12), 0xe76f51, [Math.cos(index * 2.1) * (1 + index % 3 * .3), Math.sin(index * 2.1) * .95, 1.08], 0x641208);
+    lesion.visible = false;
+    virusLesions.push(lesion);
+  }
+}
+
 function construct(id) {
   clear();
   experimentId = id;
-  if (id === "radiation") createRadiationScene(); else createFallback();
+  if (id === "radiation") createRadiationScene(); else if (id === "viruses") createVirusScene(); else createFallback();
 }
 
 function resize() {
@@ -148,6 +212,20 @@ function animate(now) {
       cell.damage.material.emissiveIntensity = exposure * 2;
       cell.object.rotation.y += running ? .012 : 0;
     });
+  }
+  if (experimentId === "viruses") {
+    const elapsed = now * .001;
+    const compatibility = { influenza: { lung: 1, liver: .15, heart: .25, brain: .15 }, corona: { lung: 1, liver: .2, heart: .4, brain: .2 }, hepatitis: { lung: .1, liver: 1, heart: .12, brain: .08 }, coxsackie: { lung: .25, liver: .2, heart: 1, brain: .18 }, zika: { lung: .1, liver: .15, heart: .12, brain: 1 } };
+    const profiles = window.virusProfiles || { influenza: { onset: .65, impact: .82, inflammation: .65, functionLoss: .82 }, corona: { onset: .82, impact: 1.05, inflammation: 1.3, functionLoss: 1.12 }, hepatitis: { onset: 1.65, impact: .7, inflammation: .5, functionLoss: 1.2 }, coxsackie: { onset: .72, impact: 1.12, inflammation: 1.05, functionLoss: 1.3 }, zika: { onset: 1.2, impact: .78, inflammation: .72, functionLoss: 1.05 } };
+    const virus = parameters.virus || "influenza";
+    const profile = profiles[virus];
+    const risk = compatibility[parameters.virus || "influenza"][parameters.organ || "lung"];
+    const damage = running ? Math.min(1, (parameters.viruslast || 35) / 100 * risk * profile.impact * (1 - (parameters.abwehr || 55) / 145) * Math.pow(Math.min(1, elapsed / 10), profile.onset)) : 0;
+    virusParticles.forEach((particle, index) => { const phase = (elapsed * (running ? .7 + 1.15 / profile.onset : 0) + particle.offset) % 1; particle.object.position.x = -4 + phase * 3.7; particle.object.position.y = -1.6 + index % 4 * .65 + Math.sin(elapsed * (2 + profile.inflammation) + index) * (.05 + profile.inflammation * .05); particle.object.scale.setScalar(.65 + phase * (.4 + profile.impact * .25)); particle.object.rotation.y += .025 + profile.impact * .035; });
+    virusCells.forEach((cell, index) => { const infected = index / virusCells.length < damage; cell.material.color.setHex(infected ? 0xe76f51 : 0x87b85c); cell.material.emissive.setHex(infected ? 0x641208 : 0x214a18); cell.material.emissiveIntensity = infected ? 1.2 : .45; cell.scale.setScalar(infected ? 1.4 : 1); });
+    virusOrgans.forEach((organ) => { organ.material.color.lerp(new THREE.Color(damage > .35 ? 0x8d2b2b : 0xcf6c63), damage * .08); organ.material.emissive.setHex(damage > .08 ? 0x641208 : 0x000000); organ.material.emissiveIntensity = damage * (.7 + .25 * Math.sin(elapsed * 5)); });
+    if (inflammation) { inflammation.material.opacity = damage * .22 * profile.inflammation; inflammation.scale.setScalar(1 + damage * (.12 + profile.inflammation * .1) + Math.sin(elapsed * (3 + profile.inflammation * 2)) * damage * .05); }
+    virusLesions.forEach((lesion, index) => { const visible = index / virusLesions.length < damage * (.7 + profile.functionLoss * .25); lesion.visible = visible; lesion.scale.setScalar(visible ? .4 + damage * (1.1 + profile.functionLoss) + Math.sin(elapsed * (4 + profile.impact * 2) + index) * .12 : .1); });
   }
   renderer.render(scene, camera);
 }

@@ -347,6 +347,9 @@
       s.y += s.vy * dt * 4;
 
       s.trail.push([s.x, s.y]);
+
+      if (s.trail.length > 180)
+        s.trail.shift();
     }
 
     if (id === "pendulum") {
@@ -454,11 +457,12 @@
   function render() {
     if (!selected) return;
 
+    const id = selected.id;
+
     context.clearRect(0, 0, 760, 420);
-    context.fillStyle = "#0d2227";
+    context.fillStyle = id === "blackhole" ? "#082a55" : "#0d2227";
     context.fillRect(0, 0, 760, 420);
 
-    const id = selected.id;
     let measures = [];
 
     context.lineWidth = 2;
@@ -696,24 +700,39 @@
 
       context.fill();
 
-      context.strokeStyle =
-        "rgba(99,214,206,.55)";
+      if (id === "blackhole") {
+        for (let i = 1; i < s.trail.length; i++) {
+          const [startX, startY] = s.trail[i - 1];
+          const [endX, endY] = s.trail[i];
+          const opacity = .12 + .78 * i / s.trail.length;
 
-      context.beginPath();
+          context.strokeStyle = `rgba(244,190,70,${opacity})`;
+          context.lineWidth = 1 + 2 * i / s.trail.length;
+          context.beginPath();
+          context.moveTo(cx + startX * scale, cy + startY * scale);
+          context.lineTo(cx + endX * scale, cy + endY * scale);
+          context.stroke();
+        }
 
-      s.trail.forEach(([x, y], i) =>
-        i
-          ? context.lineTo(
-              cx + x * scale,
-              cy + y * scale
-            )
-          : context.moveTo(
-              cx + x * scale,
-              cy + y * scale
-            )
-      );
+        if (s.trail.length) {
+          const [startX, startY] = s.trail[0];
+          context.fillStyle = "#63d6ce";
+          context.beginPath();
+          context.arc(cx + startX * scale, cy + startY * scale, 4, 0, Math.PI * 2);
+          context.fill();
+        }
+      } else {
+        context.strokeStyle = "rgba(99,214,206,.55)";
+        context.beginPath();
 
-      context.stroke();
+        s.trail.forEach(([x, y], i) =>
+          i
+            ? context.lineTo(cx + x * scale, cy + y * scale)
+            : context.moveTo(cx + x * scale, cy + y * scale)
+        );
+
+        context.stroke();
+      }
 
       ball(
         cx + s.x * scale,

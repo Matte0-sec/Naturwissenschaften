@@ -149,13 +149,30 @@ function makeOrbit(blackHole = false) {
 
   }
 
-  const orbit = mesh(new THREE.TorusGeometry(orbitRadius, .018, 6, 80), 0x63d6ce, [0, 0, 0]);
+  if (!blackHole) {
 
-  orbit.rotation.x = Math.PI / 2;
+    const orbit = mesh(new THREE.TorusGeometry(orbitRadius, .018, 6, 80), 0x63d6ce, [0, 0, 0]);
+
+    orbit.rotation.x = Math.PI / 2;
+
+  }
 
   const body = mesh(new THREE.SphereGeometry(.22, 20, 16), 0xf4be46, [orbitRadius, 0, 0], 0x694700);
 
-  movingObjects.push({ object: body, type: "orbit", radius: orbitRadius, tilted: blackHole });
+  if (blackHole) {
+
+    const trail = new THREE.Line(
+      new THREE.BufferGeometry(),
+      new THREE.LineBasicMaterial({ color: 0xf4be46, transparent: true, opacity: .85 })
+    );
+
+    const startMarker = mesh(new THREE.SphereGeometry(.09, 16, 12), 0x63d6ce, [orbitRadius, 0, 0], 0x0b4b49);
+
+    group.add(trail);
+
+    movingObjects.push({ object: body, type: "orbit", radius: orbitRadius, tilted: true, trail, points: [], startMarker });
+
+  } else movingObjects.push({ object: body, type: "orbit", radius: orbitRadius, tilted: false });
 
 }
 
@@ -350,6 +367,8 @@ function construct(id) {
 
   experimentId = id;
 
+  renderer.setClearColor(id === "blackhole" ? 0x082a55 : 0x071417, 1);
+
   if (id === "accelerator") makeAccelerator();
 
   else if (id === "magnetism") makeMagnet();
@@ -400,7 +419,18 @@ function animate(clock) {
 
     movingObjects.forEach((item) => {
 
-      if (item.type === "orbit") { const speed = experimentId === "accelerator" ? .4 + (parameters.spannung || 10) / 100 : .15 + (parameters.geschwindigkeit || 3) / 14; item.object.position.set(Math.cos(elapsed * speed) * item.radius, item.tilted ? Math.sin(elapsed * speed * 1.7) * .6 : 0, Math.sin(elapsed * speed) * item.radius); }
+      if (item.type === "orbit") {
+        const speed = experimentId === "accelerator" ? .4 + (parameters.spannung || 10) / 100 : .15 + (parameters.geschwindigkeit || 3) / 14;
+        item.object.position.set(Math.cos(elapsed * speed) * item.radius, item.tilted ? Math.sin(elapsed * speed * 1.7) * .6 : 0, Math.sin(elapsed * speed) * item.radius);
+
+        if (item.trail) {
+          item.points.push(item.object.position.clone());
+          if (item.points.length > 150) item.points.shift();
+          item.trail.geometry.dispose();
+          item.trail.geometry = new THREE.BufferGeometry().setFromPoints(item.points);
+          if (item.points.length) item.startMarker.position.copy(item.points[0]);
+        }
+      }
 
       if (item.type === "rocket") item.object.position.y = Math.min(4.8, -.5 + elapsed % 6 * Math.max(.12, (parameters.schub || 100) / Math.max(parameters.masse || 20, 1) / 90));
 

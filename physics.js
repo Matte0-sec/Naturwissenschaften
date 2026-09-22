@@ -3,7 +3,7 @@
   const canvas = $("#simulationCanvas");
   const context = canvas.getContext("2d");
   const chart = $("#chartCanvas");
-  const chartContext = chart.getContext("2d");
+  const chartContext = chart?.getContext("2d");
 
   const experimentList = [
     ["accelerator", "Teilchenbeschleuniger", "Technik", "Teilchen werden durch ein Magnetfeld auf Kreisbahnen gelenkt.", "Erhöhe die Spannung: Wie ändert sich die Teilchenenergie?", [["spannung", "Beschleunigungsspannung", 10, 400, 160, "kV"], ["feld", "Magnetfeld", 0.1, 2.5, 1, "T"]]],
@@ -1020,6 +1020,7 @@
   }
 
   function drawChart() {
+    if (!chartContext) return;
     chartContext.clearRect(
       0,
       0,

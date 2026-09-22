@@ -75,7 +75,6 @@
   let history = [];
   let animationId;
   let state = {};
-  let difficulty = "Grundlagen";
 
   const color = "#167a76";
 
@@ -105,8 +104,8 @@
     $("#simCategory").textContent = selected.category;
     $("#simTitle").textContent = selected.title;
     $("#simDescription").textContent = selected.description;
-    $("#simChallenge").textContent = window.labTeaching?.question(selected.challenge) || selected.challenge;
-    $("#levelLabel").textContent = `Stufe: ${window.labTeaching?.level() || difficulty}`;
+    $("#simChallenge").textContent = window.labTeaching?.question(selected.challenge, selected.id) || selected.challenge;
+    $("#levelLabel").textContent = `Stufe: ${window.labTeaching?.level() || "Grundlagen"}`;
 
     $("#parameterControls").innerHTML =
       selected.controls.map(controlMarkup).join("");
@@ -1245,39 +1244,6 @@
         event.target.value
       )
   );
-
-  $("#levelLabel").insertAdjacentHTML(
-    "afterend",
-    `<div class="level-picker">
-      ${[
-        "Grundlagen",
-        "Fortgeschritten",
-        "Expert"
-      ]
-        .map(
-          (level) =>
-            `<button data-level="${level}">
-              ${level}
-            </button>`
-        )
-        .join("")}
-    </div>`
-  );
-
-  document
-    .querySelectorAll("[data-level]")
-    .forEach((button) =>
-      button.addEventListener(
-        "click",
-        () => {
-          difficulty =
-            button.dataset.level;
-
-          $("#levelLabel").textContent =
-            `Stufe: ${difficulty}`;
-        }
-      )
-    );
 
   requestAnimationFrame(animate);
 })();

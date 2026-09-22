@@ -10,6 +10,8 @@
 
     ["electricity", "Elektrizität", "Technik", "Ohmsches Gesetz, elektrische Leistung und ein steuerbarer Kurzschluss.", "Was passiert bei halbiertem Widerstand?", [["spannung", "Batteriespannung", 1, 24, 12, "V"], ["widerstand", "Widerstand", 1, 100, 20, "Ω"], ["kurz", "Kurzschluss", 0, 1, 0, "aus"]]],
 
+    ["circuitBuilder", "Stromkreis bauen", "Technik", "Baue in 3D aus Batterie, Schalter, Widerstand und Lampe einen geschlossenen Stromkreis.", "Welche Bauteile brauchst du, damit die Lampe leuchtet?", [["spannung", "Batteriespannung", 1, 24, 9, "V"], ["widerstand", "Widerstand", 1, 100, 20, "Ω"]]],
+
     ["magnetism", "Elektromagnet", "Technik", "Eine Spule erzeugt ein Magnetfeld. Seine Stärke hängt von Strom und Windungen ab.", "Wie verdoppelt sich das Feld bei doppelter Windungszahl?", [["strom", "Stromstärke", 0, 10, 3, "A"], ["windungen", "Spulenanzahl", 10, 300, 100, ""], ["abstand", "Eisenabstand", 1, 20, 8, "cm"]]],
 
     ["gravity", "Orbitale Gravitation", "Astronomie", "Eine numerische Bahnrechnung nach Newton: $F = GmM/r²$.", "Welche Anfangsgeschwindigkeit führt zu einer stabilen Umlaufbahn?", [["masse", "Planetenmasse", 0.5, 3, 1, "M⊕"], ["abstand", "Startabstand", 1.2, 4, 2, "R⊕"], ["geschwindigkeit", "Startgeschwindigkeit", 3, 13, 7.9, "km/s"]]],
@@ -45,6 +47,8 @@
 
     electricity: "Die Batterie erzeugt Spannung. Bei geschlossenem Stromkreis gilt das Ohmsche Gesetz: Stromstärke = Spannung geteilt durch Widerstand. Beim Kurzschluss wird der Widerstand fast umgangen, daher steigt der Strom stark an.",
 
+    circuitBuilder: "Ein Stromkreis funktioniert nur als geschlossener Weg. Setze zuerst die Batterie, dann Schalter, Widerstand und Lampe ein. Ist der Schalter eingeschaltet, fließen elektrische Ladungen durch alle Bauteile und die Lampe leuchtet.",
+
     magnetism: "Strom durch die Spule erzeugt ein Magnetfeld. Mehr Strom oder mehr Windungen verstärken es. Das Eisenobjekt wird magnetisiert und zum stärkeren Magnetfeld gezogen.",
 
     gravity: "Die Schwerkraft zieht das Objekt fortlaufend zum Planeten. Eine passende seitliche Geschwindigkeit führt zur Umlaufbahn; ist sie zu klein, fällt das Objekt ab, und ist sie zu groß, kann es entkommen.",
@@ -75,6 +79,9 @@
   let history = [];
   let animationId;
   let state = {};
+  let circuitParts = {};
+  let circuitClosed = false;
+  let circuitCableCount = 0;
 
   const color = "#167a76";
 
@@ -95,6 +102,9 @@
     history = [];
     state = initialState(id);
     running = false;
+    circuitParts = id === "circuitBuilder" ? { battery: false, switch: false, resistor: false, bulb: false } : {};
+    circuitClosed = false;
+    circuitCableCount = 0;
 
     window.physics3d?.select(id, values);
 
@@ -111,6 +121,21 @@
       selected.controls.map(controlMarkup).join("");
 
     $("#measurements").innerHTML = "";
+
+    $("#circuitBuilder").hidden = id !== "circuitBuilder";
+    if (id === "circuitBuilder") {
+      $("#circuitBuilder").innerHTML = `<span>Bauteile einsetzen</span>${["battery", "switch", "resistor", "bulb"].map((part) => `<button type="button" data-circuit-part="${part}">${({ battery: "Batterie", switch: "Schalter", resistor: "Widerstand", bulb: "Lampe" })[part]}</button>`).join("")}<small id="circuitStatus">Ziehe Bauteile mit der Maus. Klicke anschließend zwei leuchtende Anschlüsse an, um ein Kabel zu setzen.</small>`;
+      document.querySelectorAll("[data-circuit-part]").forEach((button) => button.addEventListener("click", () => {
+        const part = button.dataset.circuitPart;
+        circuitParts[part] = !circuitParts[part];
+        updateCircuitBuilder();
+      }));
+      $("#simulationCanvas").hidden = true;
+      $("#threeViewport").hidden = false;
+      $("#threeDimensional").classList.add("active");
+      $("#twoDimensional").classList.remove("active");
+      updateCircuitBuilder();
+    }
 
     document.querySelectorAll(".experiment-card").forEach((card) =>
       card.classList.toggle("active", card.dataset.id === id)
@@ -410,6 +435,11 @@
       return values.spannung /
         (values.kurz ? .08 : values.widerstand + .4);
 
+    if (id === "circuitBuilder")
+      return circuitClosed
+        ? values.spannung / values.widerstand
+        : 0;
+
     if (id === "magnetism")
       return 1.256e-6 *
         values.windungen *
@@ -474,6 +504,22 @@
 
       measures = [
         measurement("Spannung", values.spannung, "V"),
+        measurement("Stromstärke", current, "A"),
+        measurement("Leistung", values.spannung * current, "W")
+      ];
+    }
+
+    else if (id === "circuitBuilder") {
+      const complete = Object.values(circuitParts).every(Boolean);
+      const current = metric();
+
+      context.fillStyle = "#dfeee7";
+      context.font = "18px Space Grotesk";
+      context.fillText(complete ? "Geschlossener Stromkreis: Die Lampe leuchtet." : "Setze die Bauteile in der 3D-Ansicht ein.", 105, 205);
+
+      measures = [
+        measurement("Eingesetzte Bauteile", Object.values(circuitParts).filter(Boolean).length, "von 4"),
+        measurement("Kabel", circuitCableCount, "von 4"),
         measurement("Stromstärke", current, "A"),
         measurement("Leistung", values.spannung * current, "W")
       ];
@@ -1036,6 +1082,26 @@
       220
     );
   }
+
+  function updateCircuitBuilder() {
+    document.querySelectorAll("[data-circuit-part]").forEach((button) =>
+      button.classList.toggle("active", circuitParts[button.dataset.circuitPart])
+    );
+    window.physics3d?.setCircuit(circuitParts);
+    render();
+  }
+
+  window.physicsCircuitChanged = ({ parts, closed, cableCount }) => {
+    if (selected?.id !== "circuitBuilder") return;
+    circuitParts = { ...parts };
+    circuitClosed = closed;
+    circuitCableCount = cableCount;
+    const status = $("#circuitStatus");
+    if (status) status.textContent = closed
+      ? "Stromkreis geschlossen: Die Lampe leuchtet und Ladungen fließen."
+      : `Kabel gesetzt: ${cableCount} von 4. Verbinde alle Anschlüsse zu einem geschlossenen Kreis.`;
+    render();
+  };
 
   function drawChart() {
     if (!chartContext) return;

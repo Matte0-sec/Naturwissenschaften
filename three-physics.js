@@ -40,6 +40,23 @@ let movingObjects = [];
 
 let waveMesh;
 
+let circuitParts = {};
+let circuitLayout = {};
+let circuitCables = [];
+let circuitDrag;
+let pendingTerminal;
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+const circuitPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+
+const circuitDefaults = {
+  battery: [-3.4, -1.35, 0],
+  switch: [0, -1.35, 0],
+  resistor: [0, 1.85, 0],
+  bulb: [3.4, .6, 0]
+};
+
 function material(color, emissive = 0x000000) {
 
   return new THREE.MeshStandardMaterial({ color, emissive, emissiveIntensity: emissive ? 1.2 : 0, metalness: 0.35, roughness: 0.35 });
@@ -306,6 +323,162 @@ function makeElectricity() {
 
 }
 
+function makeCircuitBuilder() {
+
+  const closed = circuitIsClosed();
+  const current = closed ? (parameters.spannung || 9) / Math.max(parameters.widerstand || 20, 1) : 0;
+  let bulb;
+
+  Object.entries(circuitParts).forEach(([part, enabled]) => {
+    if (!enabled) return;
+    const position = circuitLayout[part];
+    const geometry = part === "bulb" ? new THREE.SphereGeometry(.55, 24, 20) : part === "battery" ? new THREE.BoxGeometry(1.3, .7, .7) : part === "resistor" ? new THREE.BoxGeometry(1.4, .34, .4) : new THREE.BoxGeometry(1.1, .15, .18);
+    const color = part === "battery" ? 0xe76f51 : part === "resistor" ? 0xf4be46 : part === "bulb" ? 0xf4be46 : 0x63d6ce;
+    const object = mesh(geometry, color, position, part === "bulb" ? 0x6f4900 : part === "battery" ? 0x582012 : 0x084a47);
+    object.userData.circuitPart = part;
+    object.userData.draggable = true;
+    if (part === "switch") object.rotation.z = closed ? 0 : -.35;
+    if (part === "bulb") {
+      bulb = object;
+      bulb.material.emissiveIntensity = closed ? Math.min(3, .5 + current * 2) : .12;
+    }
+    addCircuitTerminals(part);
+  });
+
+  circuitCables.forEach(([first, second]) => {
+    const start = circuitTerminalPosition(first);
+    const end = circuitTerminalPosition(second);
+    line([start.toArray(), end.toArray()], 0x63d6ce);
+  });
+
+  if (closed && bulb) {
+    const charges = Array.from({ length: 8 }, () => mesh(new THREE.SphereGeometry(.12, 16, 12), 0x63d6ce, [-4, -1.2, .16], 0x084a47));
+    movingObjects.push({ charges, bulb, path: circuitChargePath(), type: "current", current });
+  }
+
+  window.physicsCircuitChanged?.({ parts: circuitParts, closed, cableCount: circuitCables.length });
+
+}
+
+function addCircuitTerminals(part) {
+
+  [-1, 1].forEach((side) => {
+    const key = `${part}:${side}`;
+    const terminal = mesh(new THREE.SphereGeometry(.18, 16, 12), pendingTerminal === key ? 0xf4be46 : 0x63d6ce, circuitTerminalPosition(key).toArray(), pendingTerminal === key ? 0x6f4900 : 0x084a47);
+    terminal.userData.terminal = key;
+  });
+
+}
+
+function circuitTerminalPosition(key) {
+
+  const [part, side] = key.split(":");
+  const [x, y, z] = circuitLayout[part];
+  const offset = part === "bulb" ? .62 : part === "battery" ? .78 : part === "resistor" ? .85 : .72;
+  return new THREE.Vector3(x + Number(side) * offset, y, z);
+
+}
+
+function circuitIsClosed() {
+
+  const parts = Object.keys(circuitDefaults).filter((part) => circuitParts[part]);
+  if (parts.length !== 4 || circuitCables.length !== 4) return false;
+
+  const terminals = parts.flatMap((part) => [`${part}:-1`, `${part}:1`]);
+  if (new Set(circuitCables.flat()).size !== terminals.length) return false;
+
+  const links = new Map(terminals.map((terminal) => [terminal, []]));
+  parts.forEach((part) => {
+    links.get(`${part}:-1`).push(`${part}:1`);
+    links.get(`${part}:1`).push(`${part}:-1`);
+  });
+  circuitCables.forEach(([first, second]) => {
+    links.get(first)?.push(second);
+    links.get(second)?.push(first);
+  });
+
+  const visited = new Set();
+  const queue = [terminals[0]];
+  while (queue.length) {
+    const terminal = queue.shift();
+    if (visited.has(terminal)) continue;
+    visited.add(terminal);
+    links.get(terminal).forEach((neighbor) => queue.push(neighbor));
+  }
+  return visited.size === terminals.length;
+
+}
+
+function circuitChargePath() {
+
+  const start = "battery:-1";
+  const cableLinks = new Map();
+  circuitCables.forEach(([first, second]) => {
+    cableLinks.set(first, second);
+    cableLinks.set(second, first);
+  });
+
+  const points = [];
+  let previous;
+  let terminal = start;
+  do {
+    points.push(circuitTerminalPosition(terminal));
+    const [part, side] = terminal.split(":");
+    const internal = `${part}:${-Number(side)}`;
+    const next = internal === previous ? cableLinks.get(terminal) : internal;
+    previous = terminal;
+    terminal = next;
+  } while (terminal && terminal !== start && points.length < 16);
+
+  return points;
+
+}
+
+function resetCircuitWorkspace() {
+
+  circuitLayout = Object.fromEntries(Object.entries(circuitDefaults).map(([part, position]) => [part, [...position]]));
+  circuitCables = [];
+  circuitDrag = undefined;
+  pendingTerminal = undefined;
+
+}
+
+function setCircuitPointer(event) {
+
+  const bounds = renderer.domElement.getBoundingClientRect();
+  pointer.x = (event.clientX - bounds.left) / bounds.width * 2 - 1;
+  pointer.y = -(event.clientY - bounds.top) / bounds.height * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+
+}
+
+function circuitObjectAt(event) {
+
+  setCircuitPointer(event);
+  const hits = raycaster.intersectObjects(group.children, true);
+  return hits.find((hit) => hit.object.userData.terminal)?.object ||
+    hits.find((hit) => hit.object.userData.draggable)?.object;
+
+}
+
+function connectCircuitTerminal(terminal) {
+
+  if (!pendingTerminal) {
+    pendingTerminal = terminal;
+    construct("circuitBuilder");
+    return;
+  }
+  if (pendingTerminal === terminal || pendingTerminal.split(":")[0] === terminal.split(":")[0]) {
+    pendingTerminal = undefined;
+    return;
+  }
+  const occupied = new Set(circuitCables.flat());
+  if (!occupied.has(pendingTerminal) && !occupied.has(terminal)) circuitCables.push([pendingTerminal, terminal]);
+  pendingTerminal = undefined;
+  construct("circuitBuilder");
+
+}
+
 function makeHeat() {
 
   const hotColor = new THREE.Color().setHSL(Math.max(0, .08 - (parameters.heiss || 80) / 1700), .8, .52);
@@ -389,6 +562,8 @@ function construct(id) {
 
   else if (id === "electricity") makeElectricity();
 
+  else if (id === "circuitBuilder") makeCircuitBuilder();
+
   else if (id === "heat") makeHeat();
 
   else if (id === "collision") makeCollision();
@@ -455,14 +630,23 @@ function animate(clock) {
       }
 
       if (item.type === "current") {
-        const circuitLength = 12;
         const speed = item.current * .55;
         item.charges.forEach((charge, index) => {
-          const position = (elapsed * speed + index * circuitLength / item.charges.length) % circuitLength;
-          if (position < 4) charge.position.set(-4 + position * 2, 0, .16);
-          else if (position < 6) charge.position.set(4, (position - 4) * 1, .16);
-          else if (position < 10) charge.position.set(4 - (position - 6) * 2, 2, .16);
-          else charge.position.set(-4, 2 - (position - 10), .16);
+          if (item.path?.length) {
+            const position = (elapsed * speed * .08 + index / item.charges.length) % 1;
+            const segment = position * item.path.length;
+            const start = item.path[Math.floor(segment)];
+            const end = item.path[(Math.floor(segment) + 1) % item.path.length];
+            charge.position.lerpVectors(start, end, segment % 1);
+            charge.position.z += .16;
+          } else {
+            const circuitLength = 12;
+            const position = (elapsed * speed + index * circuitLength / item.charges.length) % circuitLength;
+            if (position < 4) charge.position.set(-4 + position * 2, 0, .16);
+            else if (position < 6) charge.position.set(4, (position - 4) * 1, .16);
+            else if (position < 10) charge.position.set(4 - (position - 6) * 2, 2, .16);
+            else charge.position.set(-4, 2 - (position - 10), .16);
+          }
         });
         item.bulb.material.emissiveIntensity = Math.min(3, .3 + item.current * (1 + Math.sin(elapsed * 7)) * .4);
       }
@@ -526,13 +710,56 @@ function animate(clock) {
 
 window.physics3d = {
 
-  select(id, values) { parameters = { ...values }; construct(id); },
+  select(id, values) { if (id === "circuitBuilder") resetCircuitWorkspace(); parameters = { ...values }; construct(id); },
 
   update(values) { parameters = { ...values }; construct(experimentId); },
+
+  setCircuit(parts) {
+    circuitParts = { ...parts };
+    circuitCables = circuitCables.filter(([first, second]) => circuitParts[first.split(":")[0]] && circuitParts[second.split(":")[0]]);
+    if (experimentId === "circuitBuilder") construct(experimentId);
+  },
 
   setRunning(value) { running = value; },
 
 };
+
+renderer.domElement.addEventListener("pointerdown", (event) => {
+  if (experimentId !== "circuitBuilder") return;
+  const object = circuitObjectAt(event);
+  if (object?.userData.terminal) {
+    connectCircuitTerminal(object.userData.terminal);
+    return;
+  }
+  if (!object?.userData.draggable) return;
+  setCircuitPointer(event);
+  const point = new THREE.Vector3();
+  if (!raycaster.ray.intersectPlane(circuitPlane, point)) return;
+  const part = object.userData.circuitPart;
+  circuitDrag = { part, offset: new THREE.Vector3(...circuitLayout[part]).sub(point) };
+  renderer.domElement.setPointerCapture(event.pointerId);
+  event.preventDefault();
+});
+
+renderer.domElement.addEventListener("pointermove", (event) => {
+  if (!circuitDrag) return;
+  setCircuitPointer(event);
+  const point = new THREE.Vector3();
+  if (!raycaster.ray.intersectPlane(circuitPlane, point)) return;
+  const position = point.add(circuitDrag.offset);
+  circuitLayout[circuitDrag.part] = [
+    THREE.MathUtils.clamp(position.x, -4.2, 4.2),
+    THREE.MathUtils.clamp(position.y, -2.25, 2.35),
+    0
+  ];
+  construct("circuitBuilder");
+});
+
+renderer.domElement.addEventListener("pointerup", (event) => {
+  if (!circuitDrag) return;
+  circuitDrag = undefined;
+  if (renderer.domElement.hasPointerCapture(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId);
+});
 
 window.addEventListener("resize", resize);
 

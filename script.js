@@ -154,8 +154,14 @@ const quizCheck = document.querySelector("#quizCheck");
 const quizResult = document.querySelector("#quizResult");
 let quizExperiments = [];
 
+const schoolQuizFacts = {
+  accelerator: "Mehr Spannung gibt dem Teilchen mehr Energie.", electricity: "Weniger Widerstand lässt mehr Strom fließen.", circuitBuilder: "Die Lampe leuchtet nur in einem geschlossenen Stromkreis.", magnetism: "Mehr Strom macht den Elektromagneten stärker.", gravity: "Die Schwerkraft zieht das Objekt zum Planeten.", rocket: "Mehr Schub hilft der Rakete beim Abheben.", drag: "Mehr Luftwiderstand bremst einen fallenden Körper.", waves: "Zwei Wellen können sich verstärken oder abschwächen.", heat: "Wärme fließt vom warmen zum kalten Körper.", collision: "Bei einem Stoß können sich Geschwindigkeit und Richtung ändern.", pendulum: "Kleine Änderungen am Start können später große Unterschiede machen.", blackhole: "Mehr Masse krümmt die Bahn stärker.", optics: "Eine Linse kann Lichtstrahlen an einem Punkt sammeln.", projectile: "Der Abschusswinkel verändert die Flugweite.",
+  titration: "Säure und Lauge können zusammen neutral werden.", acidMaterials: "Manche Metalle reagieren mit Säure und bilden Blasen.", kinetics: "Wärme kann eine Reaktion schneller machen.", equilibrium: "Mehr von einem Stoff kann das Gleichgewicht verschieben.", electrolysis: "Strom kann Stoffe in einer Lösung verändern.", gases: "Weniger Platz kann den Druck eines Gases erhöhen.", calorimetry: "Eine Reaktion kann Wasser wärmer oder kälter machen.", solubility: "Wärmeres Wasser kann oft mehr Salz lösen.", redox: "Zwei verschiedene Metalle können Spannung erzeugen.", molecules: "Freie Elektronen können die Form eines Moleküls verändern.", radioactivity: "Mit der Zeit bleiben weniger radioaktive Teilchen übrig.",
+  photosynthesis: "Mit Licht kann eine Pflanze Sauerstoff herstellen.", enzymes: "Ein Enzym arbeitet bei passender Temperatur am besten.", osmosis: "Wasser kann in eine Zelle hinein- oder aus ihr herausfließen.", radiation: "Eine Schutzschicht kann Zellen vor Strahlung schützen.", viruses: "Ein Virus kann Zellen in einem Organ schädigen.", muscle: "Training und Erholung zusammen können Muskeln stärker machen.", respiration: "Zellen brauchen Sauerstoff, um Energie zu gewinnen.", population: "Mehr Platz und Nahrung können einer Population beim Wachsen helfen.",
+};
+
 function uniqueOptions(correct, alternatives) {
-  return [correct, ...alternatives.filter((option) => option !== correct)].slice(0, 4).sort(() => Math.random() - .5);
+  return [...new Set([correct, ...alternatives.filter((option) => option !== correct)])].slice(0, 4).sort(() => Math.random() - .5);
 }
 
 function createQuizQuestions(experiments) {
@@ -163,7 +169,12 @@ function createQuizQuestions(experiments) {
   const count = profile === "school" || profile === "basic" ? 1 : profile === "advanced" ? 2 : 3;
   const allDescriptions = quizExperiments.map((experiment) => experiment.description);
   return experiments.flatMap((experiment) => {
-    const questions = [{
+    const schoolQuestion = {
+      prompt: `Welche Aussage passt zu „${experiment.title}“?`,
+      answer: schoolQuizFacts[experiment.id] || "Du veränderst eine Einstellung und beobachtest, was passiert.",
+      options: uniqueOptions(schoolQuizFacts[experiment.id] || "Du veränderst eine Einstellung und beobachtest, was passiert.", quizExperiments.map((item) => schoolQuizFacts[item.id] || "Du veränderst eine Einstellung und beobachtest, was passiert.")),
+    };
+    const questions = [schoolQuestion, {
       prompt: `Welche Beschreibung passt zu „${experiment.title}“?`,
       answer: experiment.description,
       options: uniqueOptions(experiment.description, allDescriptions),
@@ -176,7 +187,7 @@ function createQuizQuestions(experiments) {
       answer: "Mehrere Einstellungen vergleichen und die Grenzen des vereinfachten Modells benennen.",
       options: uniqueOptions("Mehrere Einstellungen vergleichen und die Grenzen des vereinfachten Modells benennen.", ["Ein einzelnes Ergebnis reicht immer aus.", "Messwerte sind weniger wichtig als Vermutungen.", "Das Modell bildet automatisch jede reale Situation exakt ab."]),
     }];
-    return questions.slice(0, count).map((question) => ({ ...question, experiment: experiment.title }));
+    return (profile === "school" ? [schoolQuestion] : questions.slice(1, count + 1)).map((question) => ({ ...question, experiment: experiment.title }));
   });
 }
 

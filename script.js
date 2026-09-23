@@ -115,6 +115,7 @@ window.labTeaching = {
   explanation(text) { return learningProfiles[learningProfile].explanation(text); },
   question(text, id) { return learningProfiles[learningProfile].question(text, id); },
   level() { return learningProfiles[learningProfile].name; },
+  profile() { return learningProfile; },
   renderExplanation(targetId, text) {
     const target = document.querySelector(targetId);
     if (!target) return;
@@ -142,6 +143,69 @@ window.labTeaching = {
     if (isSchool) detail.textContent = `Mehr dazu: ${schoolDetail(text)}`;
   },
 };
+
+const quizDialog = document.querySelector("#quizDialog");
+const quizSubject = document.querySelector("#quizSubject");
+const quizIntro = document.querySelector("#quizIntro");
+const quizExperimentList = document.querySelector("#quizExperimentList");
+const quizQuestions = document.querySelector("#quizQuestions");
+const quizStart = document.querySelector("#quizStart");
+const quizCheck = document.querySelector("#quizCheck");
+const quizResult = document.querySelector("#quizResult");
+let quizExperiments = [];
+
+function uniqueOptions(correct, alternatives) {
+  return [correct, ...alternatives.filter((option) => option !== correct)].slice(0, 4).sort(() => Math.random() - .5);
+}
+
+function createQuizQuestions(experiments) {
+  const profile = window.labTeaching.profile();
+  const count = profile === "school" || profile === "basic" ? 1 : profile === "advanced" ? 2 : 3;
+  const allDescriptions = quizExperiments.map((experiment) => experiment.description);
+  return experiments.flatMap((experiment) => {
+    const questions = [{
+      prompt: `Welche Beschreibung passt zu „${experiment.title}“?`,
+      answer: experiment.description,
+      options: uniqueOptions(experiment.description, allDescriptions),
+    }, {
+      prompt: `Du willst im Experiment „${experiment.title}“ den Einfluss einer Einstellung untersuchen. Wie planst du fair?`,
+      answer: "Nur eine Einstellung verändern und die anderen möglichst gleich lassen.",
+      options: uniqueOptions("Nur eine Einstellung verändern und die anderen möglichst gleich lassen.", ["Alle Einstellungen gleichzeitig verändern.", "Nur das Bild betrachten und keine Werte vergleichen.", "Die Messung nach jeder Änderung sofort abbrechen."]),
+    }, {
+      prompt: `Welche Aussage gehört zu einer sorgfältigen Auswertung von „${experiment.title}“?`,
+      answer: "Mehrere Einstellungen vergleichen und die Grenzen des vereinfachten Modells benennen.",
+      options: uniqueOptions("Mehrere Einstellungen vergleichen und die Grenzen des vereinfachten Modells benennen.", ["Ein einzelnes Ergebnis reicht immer aus.", "Messwerte sind weniger wichtig als Vermutungen.", "Das Modell bildet automatisch jede reale Situation exakt ab."]),
+    }];
+    return questions.slice(0, count).map((question) => ({ ...question, experiment: experiment.title }));
+  });
+}
+
+function openQuiz(subject) {
+  const cards = [...document.querySelectorAll(subject === "physics" ? "#experimentCards [data-id]" : subject === "chemistry" ? "#chemistryCards [data-chem-id]" : "#biologyCards [data-bio-id]")];
+  quizExperiments = cards.map((card) => ({ id: card.dataset.id || card.dataset.chemId || card.dataset.bioId, title: card.querySelector("b")?.textContent || "Experiment", description: card.querySelector("small")?.textContent || "" }));
+  const subjectNames = { physics: "Physik", chemistry: "Chemie", biology: "Biologie" };
+  quizSubject.textContent = `${subjectNames[subject]} · ${window.labTeaching.level()}`;
+  quizIntro.textContent = "Wähle ein oder mehrere Experimente. Die Fragen passen sich dem Lernmodus vom Startbildschirm an.";
+  quizExperimentList.innerHTML = quizExperiments.map((experiment, index) => `<label class="quiz-experiment"><input type="checkbox" value="${experiment.id}" ${index === 0 ? "checked" : ""} />${experiment.title}</label>`).join("");
+  quizQuestions.hidden = true; quizQuestions.innerHTML = ""; quizStart.hidden = false; quizCheck.hidden = true; quizResult.hidden = true; quizDialog.hidden = false;
+}
+
+document.querySelectorAll("[data-open-quiz]").forEach((button) => button.addEventListener("click", () => openQuiz(button.dataset.openQuiz)));
+document.querySelector("#quizClose").addEventListener("click", () => { quizDialog.hidden = true; });
+quizStart.addEventListener("click", () => {
+  const selectedIds = [...quizExperimentList.querySelectorAll("input:checked")].map((input) => input.value);
+  const selectedExperiments = quizExperiments.filter((experiment) => selectedIds.includes(experiment.id));
+  if (!selectedExperiments.length) { quizResult.textContent = "Wähle mindestens ein Experiment aus."; quizResult.hidden = false; return; }
+  const questions = createQuizQuestions(selectedExperiments);
+  quizQuestions.innerHTML = questions.map((question, index) => `<fieldset class="quiz-question" data-answer="${question.answer.replaceAll('"', '&quot;')}"><p>${index + 1}. ${question.prompt}</p>${question.options.map((option) => `<label><input type="radio" name="quiz-${index}" value="${option.replaceAll('"', '&quot;')}" />${option}</label>`).join("")}</fieldset>`).join("");
+  quizQuestions.hidden = false; quizStart.hidden = true; quizCheck.hidden = false; quizResult.hidden = true;
+});
+quizCheck.addEventListener("click", () => {
+  const questions = [...quizQuestions.querySelectorAll(".quiz-question")]; let correct = 0;
+  questions.forEach((question) => { const answer = question.querySelector("input:checked")?.value; const isCorrect = answer === question.dataset.answer; question.classList.toggle("quiz-correct", isCorrect); question.classList.toggle("quiz-wrong", !isCorrect); if (isCorrect) correct += 1; });
+  quizResult.textContent = `${correct} von ${questions.length} Antworten richtig. Lernmodus: ${window.labTeaching.level()}.`;
+  quizResult.hidden = false;
+});
 
 function getValues() {
   const heat = mode === "physics" ? Number(controls.heat.value) : 0;

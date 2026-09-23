@@ -135,6 +135,46 @@ function createExperimentScene(id) {
     addMesh(new THREE.CylinderGeometry(3.8, 4.3, .35, 48), 0x365b36, [0, -2.1, 0], 0x173b22);
     const count = Math.max(6, Math.min(42, Math.round((parameters.start || 25) / 5)));
     for (let index = 0; index < count; index += 1) experimentParticles.push({ object: addMesh(new THREE.SphereGeometry(.13, 12, 10), 0xb9d983, [Math.cos(index * 2.4) * (1 + index % 4 * .5), -1.65, Math.sin(index * 2.4) * (1 + index % 4 * .5)], 0x456a2e), offset: index / count, kind: "organism" });
+  } else if (id === "muscle") {
+    const colors = { chest: 0xe76f51, back: 0x63d6ce, legs: 0xb9d983, shoulders: 0xf4be46, arms: 0xa582d8 };
+    const groupName = parameters.muscleGroup || "chest";
+    const color = colors[groupName];
+    const bodyColor = 0x496964;
+    addMesh(new THREE.SphereGeometry(.55, 22, 18), 0x86aaa1, [0, 2.45, 0], 0x274640);
+    addMesh(new THREE.CapsuleGeometry(.95, 2.15, 10, 20), bodyColor, [0, .55, 0], 0x193b36);
+    [[-1.22, .85, -.38], [1.22, .85, .38], [-.48, -2.05, -.15], [.48, -2.05, .15]].forEach(([x, y, rotation]) => { const limb = addMesh(new THREE.CapsuleGeometry(.23, 1.55, 8, 14), bodyColor, [x, y, 0], 0x193b36); limb.rotation.z = rotation; });
+    let muscle;
+    if (groupName === "legs") {
+      muscle = new THREE.Group();
+      [-.48, .48].forEach((x) => muscle.add(new THREE.Mesh(new THREE.CapsuleGeometry(.34, 1.48, 10, 18), material(color, color))));
+      muscle.children[0].position.x = -.48; muscle.children[1].position.x = .48; muscle.position.set(0, -1.88, .45); group.add(muscle);
+    } else if (groupName === "back") {
+      muscle = addMesh(new THREE.SphereGeometry(1.05, 28, 20), color, [0, .65, -.65], color); muscle.scale.set(1, 1.15, .22);
+    } else if (groupName === "arms") {
+      muscle = new THREE.Group();
+      [-1.23, 1.23].forEach((x) => { const arm = new THREE.Mesh(new THREE.CapsuleGeometry(.31, .85, 10, 16), material(color, color)); arm.position.set(x, .58, .32); arm.rotation.z = x < 0 ? -.18 : .18; muscle.add(arm); }); group.add(muscle);
+    } else if (groupName === "shoulders") {
+      muscle = new THREE.Group();
+      [-.98, .98].forEach((x) => muscle.add(new THREE.Mesh(new THREE.SphereGeometry(.48, 20, 16), material(color, color)))); muscle.children[0].position.set(-.98, 1.55, .15); muscle.children[1].position.set(.98, 1.55, .15); group.add(muscle);
+    } else {
+      muscle = addMesh(new THREE.SphereGeometry(1.08, 28, 20), color, [0, .82, .68], color); muscle.scale.set(1, .72, .2);
+    }
+    experimentObjects.push(muscle);
+    const fiberOrigin = groupName === "legs" ? [0, -1.9, .83] : groupName === "back" ? [0, .65, -.93] : groupName === "arms" ? [0, .55, .62] : groupName === "shoulders" ? [0, 1.55, .65] : [0, .82, .94];
+    for (let index = 0; index < 12; index += 1) {
+      const fiber = line([[fiberOrigin[0] - .65 + index % 4 * .43, fiberOrigin[1] - .42 + Math.floor(index / 4) * .42, fiberOrigin[2]], [fiberOrigin[0] - .5 + index % 4 * .38, fiberOrigin[1] - .18 + Math.floor(index / 4) * .38, fiberOrigin[2] + .03]], 0xffded7, .5);
+      experimentParticles.push({ object: fiber, offset: index / 12, kind: "fiber" });
+    }
+    const weighted = !["pushups", "pullups", "lunges", "pike", "dips"].includes(parameters.exercise);
+    if (weighted) {
+      const barbell = new THREE.Group(); barbell.userData.role = "barbell"; barbell.position.set(0, -2.45, .25); group.add(barbell);
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 4.2, 12), material(0xdfeee7, 0x5b777b)); bar.rotation.z = Math.PI / 2; barbell.add(bar);
+      const plateSize = .28 + Math.min(.42, (parameters.weight || 40) / 260);
+      [-2, 2].forEach((x) => { const plate = new THREE.Mesh(new THREE.CylinderGeometry(plateSize, plateSize, .16, 18), material(0x254147, 0x10262b)); plate.position.x = x; plate.rotation.x = Math.PI / 2; barbell.add(plate); });
+      experimentObjects.push(barbell);
+    } else {
+      const marker = addMesh(new THREE.TorusGeometry(.55, .06, 10, 24), color, [0, -2.15, .2], color); marker.userData.role = "movement"; experimentObjects.push(marker);
+    }
   }
 }
 
@@ -273,6 +313,19 @@ function animate(now) {
   if (experimentId === "population") {
     const rate = parameters.rate || .35; const capacity = parameters.kapazitaet || 800; const visibleCount = Math.max(4, Math.min(experimentParticles.length, Math.round(capacity / 50)));
     experimentParticles.forEach((particle, index) => { particle.object.visible = index < visibleCount; const angle = elapsed * (running ? rate : 0) + particle.offset * Math.PI * 2; const radius = 1 + (index % 4) * .48; particle.object.position.set(Math.cos(angle) * radius, -1.65 + Math.sin(elapsed * 3 + index) * .05, Math.sin(angle) * radius); });
+  }
+  if (experimentId === "muscle") {
+    const weighted = !["pushups", "pullups", "lunges", "pike", "dips"].includes(parameters.exercise);
+    const load = weighted ? Math.min(1, (parameters.weight || 0) / 80) : .45;
+    const stimulus = load * (parameters.einheiten || 3) / 3 * (parameters.regeneration || 75) / 100;
+    const contraction = running ? (Math.sin(elapsed * (2 + stimulus * 2)) + 1) / 2 : 0;
+    const pulse = 1 + contraction * (.06 + stimulus * .08);
+    if (experimentObjects[0]) { experimentObjects[0].scale.setScalar((1 + stimulus * .16) * pulse); experimentObjects[0].traverse((part) => { if (part.material?.emissive) part.material.emissiveIntensity = .35 + stimulus; }); }
+    experimentParticles.forEach((fiber, index) => { fiber.object.material.opacity = .25 + contraction * .65; fiber.object.material.color.setHSL(.02, .65, .7 + contraction * .18); fiber.object.scale.x = .7 + contraction * .35 + index % 3 * .04; });
+    experimentObjects.slice(1).forEach((object) => {
+      if (object.userData.role === "barbell") { const range = parameters.exercise === "squat" ? 1.1 : parameters.exercise === "curl" ? .8 : .55; object.position.y = -2.45 + contraction * range; object.rotation.z = Math.sin(elapsed * 2) * .035; }
+      if (object.userData.role === "movement") { object.position.y = -2.15 + contraction * .8; object.rotation.z += running ? .045 : 0; object.material.emissiveIntensity = .55 + contraction; }
+    });
   }
   renderer.render(scene, camera);
 }

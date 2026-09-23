@@ -29,6 +29,8 @@ let virusParticles = [];
 let virusOrgans = [];
 let virusLesions = [];
 let inflammation;
+let experimentObjects = [];
+let experimentParticles = [];
 
 function material(color, glow = 0x000000) {
   return new THREE.MeshStandardMaterial({ color, emissive: glow, emissiveIntensity: glow ? .9 : 0, roughness: .38, metalness: .16 });
@@ -59,6 +61,8 @@ function clear() {
   virusOrgans = [];
   virusLesions = [];
   inflammation = undefined;
+  experimentObjects = [];
+  experimentParticles = [];
 }
 
 function createRadiationScene() {
@@ -110,8 +114,28 @@ function createRadiationScene() {
   }
 }
 
-function createFallback() {
-  addMesh(new THREE.SphereGeometry(2.4, 38, 28), 0x5d8b3c, [0, 0, 0], 0x254814);
+function createExperimentScene(id) {
+  if (id === "photosynthesis") {
+    const leaf = addMesh(new THREE.SphereGeometry(1.9, 32, 20), 0x5d8b3c, [0, 0, 0], 0x254814); leaf.scale.set(1.15, .22, .72); experimentObjects.push(leaf);
+    addMesh(new THREE.CylinderGeometry(.16, .24, 2.6, 12), 0x456a2e, [0, -2.1, 0]);
+    addMesh(new THREE.SphereGeometry(.55, 24, 18), 0xf4be46, [3.6, 2.6, 0], 0x9d6310);
+    for (let index = 0; index < 18; index += 1) experimentParticles.push({ object: addMesh(new THREE.SphereGeometry(.08, 12, 10), 0x63d6ce, [-3 + index % 6, 1.5 - Math.floor(index / 6) * 1.25, .4], 0x1f7772), offset: index / 18, kind: "light" });
+  } else if (id === "enzymes") {
+    const enzyme = addMesh(new THREE.TorusGeometry(1.45, .38, 18, 42), 0x5d8b3c, [0, 0, 0], 0x254814); enzyme.rotation.x = Math.PI / 2; experimentObjects.push(enzyme);
+    for (let index = 0; index < 16; index += 1) experimentParticles.push({ object: addMesh(new THREE.SphereGeometry(.16, 14, 12), index % 2 ? 0xf4be46 : 0x63d6ce, [-3 + index % 5 * 1.2, -1.5 + Math.floor(index / 5) * 1.1, .6], 0x5a4710), offset: index / 16, kind: "substrate" });
+  } else if (id === "osmosis") {
+    const cell = addMesh(new THREE.SphereGeometry(2, 34, 26), 0x63d6ce, [0, 0, 0], 0x174f56); cell.material.transparent = true; cell.material.opacity = .42; experimentObjects.push(cell);
+    addMesh(new THREE.SphereGeometry(.7, 24, 18), 0x425a9e, [0, 0, 0], 0x101c55);
+    for (let index = 0; index < 28; index += 1) experimentParticles.push({ object: addMesh(new THREE.SphereGeometry(.07, 10, 8), 0xdfeee7, [-3 + index % 7, -1.7 + Math.floor(index / 7) * 1.15, .2], 0x779ca0), offset: index / 28, kind: "water" });
+  } else if (id === "respiration") {
+    const mitochondrion = addMesh(new THREE.SphereGeometry(2.1, 36, 24), 0xe76f51, [0, 0, 0], 0x641208); mitochondrion.scale.set(1.25, .58, .72); experimentObjects.push(mitochondrion);
+    for (let index = -2; index <= 2; index += 1) line([[-1.7, index * .42, .95], [0, index * .25, 1.2], [1.7, index * .42, .95]], 0xf4be46, .8);
+    for (let index = 0; index < 18; index += 1) experimentParticles.push({ object: addMesh(new THREE.SphereGeometry(.11, 12, 10), index % 3 ? 0xf4be46 : 0x63d6ce, [-3 + index % 6, -1.4 + Math.floor(index / 6) * 1.2, .6], 0x355e72), offset: index / 18, kind: "energy" });
+  } else if (id === "population") {
+    addMesh(new THREE.CylinderGeometry(3.8, 4.3, .35, 48), 0x365b36, [0, -2.1, 0], 0x173b22);
+    const count = Math.max(6, Math.min(42, Math.round((parameters.start || 25) / 5)));
+    for (let index = 0; index < count; index += 1) experimentParticles.push({ object: addMesh(new THREE.SphereGeometry(.13, 12, 10), 0xb9d983, [Math.cos(index * 2.4) * (1 + index % 4 * .5), -1.65, Math.sin(index * 2.4) * (1 + index % 4 * .5)], 0x456a2e), offset: index / count, kind: "organism" });
+  }
 }
 
 function createVirusScene() {
@@ -171,7 +195,7 @@ function createVirusScene() {
 function construct(id) {
   clear();
   experimentId = id;
-  if (id === "radiation") createRadiationScene(); else if (id === "viruses") createVirusScene(); else createFallback();
+  if (id === "radiation") createRadiationScene(); else if (id === "viruses") createVirusScene(); else createExperimentScene(id);
 }
 
 function resize() {
@@ -184,8 +208,8 @@ function resize() {
 
 function animate(now) {
   requestAnimationFrame(animate);
+  const elapsed = now * .001;
   if (experimentId === "radiation") {
-    const elapsed = now * .001;
     const dose = parameters.dosis || 2;
     const distance = parameters.abstand || 60;
     const shielding = parameters.abschirmung || 0;
@@ -214,7 +238,6 @@ function animate(now) {
     });
   }
   if (experimentId === "viruses") {
-    const elapsed = now * .001;
     const compatibility = { influenza: { lung: 1, liver: .15, heart: .25, brain: .15 }, corona: { lung: 1, liver: .2, heart: .4, brain: .2 }, hepatitis: { lung: .1, liver: 1, heart: .12, brain: .08 }, coxsackie: { lung: .25, liver: .2, heart: 1, brain: .18 }, zika: { lung: .1, liver: .15, heart: .12, brain: 1 } };
     const profiles = window.virusProfiles || { influenza: { onset: .65, impact: .82, inflammation: .65, functionLoss: .82 }, corona: { onset: .82, impact: 1.05, inflammation: 1.3, functionLoss: 1.12 }, hepatitis: { onset: 1.65, impact: .7, inflammation: .5, functionLoss: 1.2 }, coxsackie: { onset: .72, impact: 1.12, inflammation: 1.05, functionLoss: 1.3 }, zika: { onset: 1.2, impact: .78, inflammation: .72, functionLoss: 1.05 } };
     const virus = parameters.virus || "influenza";
@@ -226,6 +249,30 @@ function animate(now) {
     virusOrgans.forEach((organ) => { organ.material.color.lerp(new THREE.Color(damage > .35 ? 0x8d2b2b : 0xcf6c63), damage * .08); organ.material.emissive.setHex(damage > .08 ? 0x641208 : 0x000000); organ.material.emissiveIntensity = damage * (.7 + .25 * Math.sin(elapsed * 5)); });
     if (inflammation) { inflammation.material.opacity = damage * .22 * profile.inflammation; inflammation.scale.setScalar(1 + damage * (.12 + profile.inflammation * .1) + Math.sin(elapsed * (3 + profile.inflammation * 2)) * damage * .05); }
     virusLesions.forEach((lesion, index) => { const visible = index / virusLesions.length < damage * (.7 + profile.functionLoss * .25); lesion.visible = visible; lesion.scale.setScalar(visible ? .4 + damage * (1.1 + profile.functionLoss) + Math.sin(elapsed * (4 + profile.impact * 2) + index) * .12 : .1); });
+  }
+  if (experimentId === "photosynthesis") {
+    const rate = (parameters.licht || 55) / 100 * (parameters.co2 || 420) / ((parameters.co2 || 420) + 250) * Math.exp(-(((parameters.temperatur || 22) - 25) ** 2) / 180);
+    experimentObjects[0]?.scale.set(1.15, .22 + rate * .18, .72 + rate * .22);
+    experimentParticles.forEach((particle, index) => { const phase = (elapsed * (running ? .45 + rate * 1.6 : 0) + particle.offset) % 1; particle.object.position.set(3.25 - phase * 5.5, 2.35 - phase * 2.25 + Math.sin(elapsed * 3 + index) * .1, .4); particle.object.visible = rate > .03; });
+  }
+  if (experimentId === "enzymes") {
+    const activity = Math.exp(-(((parameters.temperatur || 25) - 37) ** 2) / 170) * Math.exp(-(((parameters.ph || 7) - 7) ** 2) / 3) * (parameters.substrat || 1) / ((parameters.substrat || 1) + .5);
+    experimentObjects[0]?.material.color.setHSL(.28 - activity * .08, .35 + activity * .35, .32 + activity * .22);
+    experimentParticles.forEach((particle, index) => { const angle = elapsed * (running ? .6 + activity * 2 : 0) + particle.offset * Math.PI * 2; particle.object.position.set(Math.cos(angle) * (2.5 - activity), Math.sin(angle * 1.7) * 1.45, .55); particle.object.scale.setScalar(.55 + activity); });
+  }
+  if (experimentId === "osmosis") {
+    const difference = (parameters.aussen || .8) - (parameters.innen || .4); const volume = Math.max(.55, Math.min(1.35, (parameters.volumen || 55) / 55 - difference * .45));
+    experimentObjects[0]?.scale.setScalar(volume);
+    experimentParticles.forEach((particle, index) => { const direction = difference >= 0 ? -1 : 1; const phase = (elapsed * (running ? .3 + Math.abs(difference) * 1.5 : 0) + particle.offset) % 1; particle.object.position.set(3 * direction - phase * direction * 5.3, -1.6 + index % 7 * .52, .25); });
+  }
+  if (experimentId === "respiration") {
+    const rate = (parameters.glucose || 1.5) * (parameters.sauerstoff || 12) / ((parameters.sauerstoff || 12) + 4) * Math.exp(-(((parameters.temperatur || 25) - 37) ** 2) / 150);
+    if (experimentObjects[0]) experimentObjects[0].material.emissiveIntensity = .25 + Math.min(1, rate / 2) * 1.2;
+    experimentParticles.forEach((particle, index) => { const phase = (elapsed * (running ? .4 + rate : 0) + particle.offset) % 1; particle.object.position.set(-3 + phase * 5.8, -1.25 + index % 6 * .5, .65 + Math.sin(elapsed * 3 + index) * .12); particle.object.material.color.setHex(phase > .72 ? 0x63d6ce : index % 3 ? 0xf4be46 : 0xdfeee7); });
+  }
+  if (experimentId === "population") {
+    const rate = parameters.rate || .35; const capacity = parameters.kapazitaet || 800; const visibleCount = Math.max(4, Math.min(experimentParticles.length, Math.round(capacity / 50)));
+    experimentParticles.forEach((particle, index) => { particle.object.visible = index < visibleCount; const angle = elapsed * (running ? rate : 0) + particle.offset * Math.PI * 2; const radius = 1 + (index % 4) * .48; particle.object.position.set(Math.cos(angle) * radius, -1.65 + Math.sin(elapsed * 3 + index) * .05, Math.sin(angle) * radius); });
   }
   renderer.render(scene, camera);
 }

@@ -157,7 +157,8 @@ const achievementSummary = document.querySelector("#achievementSummary");
 const achievementBadges = document.querySelector("#achievementBadges");
 let quizExperiments = [];
 const achievementKey = "scienceLabQuizProgress";
-let quizProgress = JSON.parse(localStorage.getItem(achievementKey) || "{\"points\":0,\"solved\":0,\"lastLevel\":\"Noch kein Quiz\",\"badges\":[]}");
+const emptyQuizProgress = () => ({ points: 0, solved: 0, lastLevel: "Noch kein Quiz", badges: [] });
+let quizProgress = JSON.parse(localStorage.getItem(achievementKey) || JSON.stringify(emptyQuizProgress()));
 
 const badgeDefinitions = [
   { id: "start", icon: "01", title: "Erster Treffer", text: "Beantworte eine Frage richtig." },
@@ -236,6 +237,7 @@ document.querySelectorAll("[data-open-quiz]").forEach((button) => button.addEven
 document.querySelector("#quizClose").addEventListener("click", () => { quizDialog.hidden = true; });
 document.querySelectorAll("[data-open-achievements]").forEach((button) => button.addEventListener("click", () => { renderAchievements(); achievementDialog.hidden = false; }));
 document.querySelector("#achievementClose").addEventListener("click", () => { achievementDialog.hidden = true; });
+document.querySelector("#achievementReset").addEventListener("click", () => { quizProgress = emptyQuizProgress(); saveQuizProgress(); renderAchievements(); });
 quizStart.addEventListener("click", () => {
   const selectedIds = [...quizExperimentList.querySelectorAll("input:checked")].map((input) => input.value);
   const selectedExperiments = quizExperiments.filter((experiment) => selectedIds.includes(experiment.id));

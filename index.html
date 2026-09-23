@@ -45,7 +45,7 @@
           <p class="eyebrow">Biologie Labor</p>
           <h1 id="biologyPlatformTitle">Leben <span>&</span> Systeme</h1>
         </div>
-        <div class="platform-tools"><button class="quiz-launch" type="button" data-open-quiz="biology">Quiz</button><label class="search-box" for="biologySearch">⌕ <input id="biologySearch" type="search" placeholder="Experiment suchen" /></label></div>
+        <div class="platform-tools"><button class="achievement-launch" type="button" data-open-achievements>Erfolge</button><button class="quiz-launch" type="button" data-open-quiz="biology">Quiz</button><label class="search-box" for="biologySearch">⌕ <input id="biologySearch" type="search" placeholder="Experiment suchen" /></label></div>
       </header>
       <div class="platform-layout biology-layout">
         <aside class="catalog-panel">
@@ -85,7 +85,7 @@
           <p class="eyebrow">Physik Labor</p>
           <h1 id="physicsPlatformTitle">Experimentier-<span>Plattform</span></h1>
         </div>
-        <div class="platform-tools"><button class="quiz-launch" type="button" data-open-quiz="physics">Quiz</button><label class="search-box" for="experimentSearch">⌕ <input id="experimentSearch" type="search" placeholder="Experiment suchen" /></label></div>
+        <div class="platform-tools"><button class="achievement-launch" type="button" data-open-achievements>Erfolge</button><button class="quiz-launch" type="button" data-open-quiz="physics">Quiz</button><label class="search-box" for="experimentSearch">⌕ <input id="experimentSearch" type="search" placeholder="Experiment suchen" /></label></div>
       </header>
       <div class="platform-layout">
         <aside class="catalog-panel">
@@ -117,7 +117,7 @@
           <p class="eyebrow">Chemie Labor</p>
           <h1 id="chemistryPlatformTitle">Reaktion <span>&</span> Analyse</h1>
         </div>
-        <div class="platform-tools"><button class="quiz-launch" type="button" data-open-quiz="chemistry">Quiz</button><label class="search-box" for="chemistrySearch">⌕ <input id="chemistrySearch" type="search" placeholder="Experiment suchen" /></label></div>
+        <div class="platform-tools"><button class="achievement-launch" type="button" data-open-achievements>Erfolge</button><button class="quiz-launch" type="button" data-open-quiz="chemistry">Quiz</button><label class="search-box" for="chemistrySearch">⌕ <input id="chemistrySearch" type="search" placeholder="Experiment suchen" /></label></div>
       </header>
       <div class="platform-layout chemistry-layout">
         <aside class="catalog-panel">
@@ -149,6 +149,14 @@
         <div id="quizQuestions" class="quiz-questions" hidden></div>
         <div class="quiz-actions"><button id="quizStart" class="primary-button" type="button">Fragen starten</button><button id="quizCheck" class="primary-button" type="button" hidden>Auswerten</button></div>
         <p id="quizResult" class="quiz-result" hidden></p>
+      </div>
+    </section>
+
+    <section id="achievementDialog" class="quiz-dialog" hidden aria-labelledby="achievementTitle">
+      <div class="quiz-panel achievement-panel" role="dialog" aria-modal="true">
+        <div class="quiz-header"><div><p class="eyebrow">Quiz-Profil</p><h2 id="achievementTitle">Erfolge</h2></div><button id="achievementClose" class="tool-button" type="button" title="Erfolge schließen" aria-label="Erfolge schließen">×</button></div>
+        <div id="achievementSummary" class="achievement-summary"></div>
+        <div id="achievementBadges" class="achievement-badges"></div>
       </div>
     </section>
 

@@ -152,7 +152,38 @@ const quizQuestions = document.querySelector("#quizQuestions");
 const quizStart = document.querySelector("#quizStart");
 const quizCheck = document.querySelector("#quizCheck");
 const quizResult = document.querySelector("#quizResult");
+const achievementDialog = document.querySelector("#achievementDialog");
+const achievementSummary = document.querySelector("#achievementSummary");
+const achievementBadges = document.querySelector("#achievementBadges");
 let quizExperiments = [];
+const achievementKey = "scienceLabQuizProgress";
+let quizProgress = JSON.parse(localStorage.getItem(achievementKey) || "{\"points\":0,\"solved\":0,\"lastLevel\":\"Noch kein Quiz\",\"badges\":[]}");
+
+const badgeDefinitions = [
+  { id: "start", icon: "01", title: "Erster Treffer", text: "Beantworte eine Frage richtig." },
+  { id: "school", icon: "02", title: "Schul-Profi", text: "Löse ein Schul-Quiz vollständig richtig." },
+  { id: "basic", icon: "03", title: "Grundlagen-Sicher", text: "Löse ein Grundlagen-Quiz vollständig richtig." },
+  { id: "advanced", icon: "04", title: "Forscher:in", text: "Löse ein fortgeschrittenes Quiz vollständig richtig." },
+  { id: "expert", icon: "05", title: "Expert:in", text: "Löse ein Expert:innen-Quiz vollständig richtig." },
+];
+
+function saveQuizProgress() { localStorage.setItem(achievementKey, JSON.stringify(quizProgress)); }
+
+function renderAchievements() {
+  achievementSummary.innerHTML = `<div><span>Punkte</span><b>${quizProgress.points}</b></div><div><span>Richtig gelöst</span><b>${quizProgress.solved}</b></div><div><span>Letztes Level</span><b>${quizProgress.lastLevel}</b></div>`;
+  achievementBadges.innerHTML = badgeDefinitions.map((badge) => `<article class="achievement-badge ${quizProgress.badges.includes(badge.id) ? "earned" : ""}"><span>${badge.icon}</span><b>${badge.title}</b><small>${badge.text}</small></article>`).join("");
+}
+
+function awardQuizAchievements(correct, total) {
+  const profile = window.labTeaching.profile();
+  quizProgress.points += correct;
+  quizProgress.solved += correct;
+  quizProgress.lastLevel = window.labTeaching.level();
+  if (correct > 0 && !quizProgress.badges.includes("start")) quizProgress.badges.push("start");
+  if (correct === total && !quizProgress.badges.includes(profile)) quizProgress.badges.push(profile);
+  saveQuizProgress();
+  renderAchievements();
+}
 
 const schoolQuizFacts = {
   accelerator: "Mehr Spannung gibt dem Teilchen mehr Energie.", electricity: "Weniger Widerstand lässt mehr Strom fließen.", circuitBuilder: "Die Lampe leuchtet nur in einem geschlossenen Stromkreis.", magnetism: "Mehr Strom macht den Elektromagneten stärker.", gravity: "Die Schwerkraft zieht das Objekt zum Planeten.", rocket: "Mehr Schub hilft der Rakete beim Abheben.", drag: "Mehr Luftwiderstand bremst einen fallenden Körper.", waves: "Zwei Wellen können sich verstärken oder abschwächen.", heat: "Wärme fließt vom warmen zum kalten Körper.", collision: "Bei einem Stoß können sich Geschwindigkeit und Richtung ändern.", pendulum: "Kleine Änderungen am Start können später große Unterschiede machen.", blackhole: "Mehr Masse krümmt die Bahn stärker.", optics: "Eine Linse kann Lichtstrahlen an einem Punkt sammeln.", projectile: "Der Abschusswinkel verändert die Flugweite.",
@@ -203,6 +234,8 @@ function openQuiz(subject) {
 
 document.querySelectorAll("[data-open-quiz]").forEach((button) => button.addEventListener("click", () => openQuiz(button.dataset.openQuiz)));
 document.querySelector("#quizClose").addEventListener("click", () => { quizDialog.hidden = true; });
+document.querySelectorAll("[data-open-achievements]").forEach((button) => button.addEventListener("click", () => { renderAchievements(); achievementDialog.hidden = false; }));
+document.querySelector("#achievementClose").addEventListener("click", () => { achievementDialog.hidden = true; });
 quizStart.addEventListener("click", () => {
   const selectedIds = [...quizExperimentList.querySelectorAll("input:checked")].map((input) => input.value);
   const selectedExperiments = quizExperiments.filter((experiment) => selectedIds.includes(experiment.id));
@@ -214,6 +247,7 @@ quizStart.addEventListener("click", () => {
 quizCheck.addEventListener("click", () => {
   const questions = [...quizQuestions.querySelectorAll(".quiz-question")]; let correct = 0;
   questions.forEach((question) => { const answer = question.querySelector("input:checked")?.value; const isCorrect = answer === question.dataset.answer; question.classList.toggle("quiz-correct", isCorrect); question.classList.toggle("quiz-wrong", !isCorrect); question.querySelectorAll("label").forEach((label) => { const option = label.querySelector("input").value; label.classList.toggle("quiz-answer-correct", option === question.dataset.answer); label.classList.toggle("quiz-answer-wrong", option === answer && !isCorrect); }); if (isCorrect) correct += 1; });
+  awardQuizAchievements(correct, questions.length);
   quizResult.textContent = `${correct} von ${questions.length} Antworten richtig. Lernmodus: ${window.labTeaching.level()}.`;
   quizResult.hidden = false;
 });

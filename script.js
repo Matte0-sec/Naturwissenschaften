@@ -213,7 +213,7 @@ quizStart.addEventListener("click", () => {
 });
 quizCheck.addEventListener("click", () => {
   const questions = [...quizQuestions.querySelectorAll(".quiz-question")]; let correct = 0;
-  questions.forEach((question) => { const answer = question.querySelector("input:checked")?.value; const isCorrect = answer === question.dataset.answer; question.classList.toggle("quiz-correct", isCorrect); question.classList.toggle("quiz-wrong", !isCorrect); if (isCorrect) correct += 1; });
+  questions.forEach((question) => { const answer = question.querySelector("input:checked")?.value; const isCorrect = answer === question.dataset.answer; question.classList.toggle("quiz-correct", isCorrect); question.classList.toggle("quiz-wrong", !isCorrect); question.querySelectorAll("label").forEach((label) => { const option = label.querySelector("input").value; label.classList.toggle("quiz-answer-correct", option === question.dataset.answer); label.classList.toggle("quiz-answer-wrong", option === answer && !isCorrect); }); if (isCorrect) correct += 1; });
   quizResult.textContent = `${correct} von ${questions.length} Antworten richtig. Lernmodus: ${window.labTeaching.level()}.`;
   quizResult.hidden = false;
 });

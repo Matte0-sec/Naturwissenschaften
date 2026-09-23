@@ -20,6 +20,15 @@ scene.add(group);
 let bubbles = [];
 let reactive = false;
 let running = false;
+const cameraState = { yaw: 0, pitch: .42, radius: 13.1, drag: undefined };
+
+function updateCamera() {
+  const horizontal = cameraState.radius * Math.cos(cameraState.pitch);
+  camera.position.set(horizontal * Math.sin(cameraState.yaw), cameraState.radius * Math.sin(cameraState.pitch), horizontal * Math.cos(cameraState.yaw));
+  camera.lookAt(0, 0, 0);
+}
+
+function resetCamera() { cameraState.yaw = 0; cameraState.pitch = .42; cameraState.radius = 13.1; updateCamera(); }
 
 const labels = document.createElement("div");
 labels.className = "chemistry-3d-labels";
@@ -143,5 +152,12 @@ window.chemistry3d = {
   setRunning(value) { running = value; },
 };
 
+renderer.domElement.addEventListener("pointerdown", (event) => { cameraState.drag = { x: event.clientX, y: event.clientY, pointerId: event.pointerId }; renderer.domElement.setPointerCapture(event.pointerId); });
+renderer.domElement.addEventListener("pointermove", (event) => { if (!cameraState.drag) return; cameraState.yaw -= (event.clientX - cameraState.drag.x) * .012; cameraState.pitch = THREE.MathUtils.clamp(cameraState.pitch + (event.clientY - cameraState.drag.y) * .012, -.45, 1.15); cameraState.drag.x = event.clientX; cameraState.drag.y = event.clientY; updateCamera(); });
+renderer.domElement.addEventListener("pointerup", (event) => { if (!cameraState.drag) return; cameraState.drag = undefined; if (renderer.domElement.hasPointerCapture(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId); });
+renderer.domElement.addEventListener("wheel", (event) => { event.preventDefault(); cameraState.radius = THREE.MathUtils.clamp(cameraState.radius + event.deltaY * .012, 6, 24); updateCamera(); }, { passive: false });
+document.querySelector("[data-camera-reset='chemistry']").addEventListener("click", resetCamera);
+
 window.addEventListener("resize", resize);
+resetCamera();
 requestAnimationFrame(animate);

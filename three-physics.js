@@ -45,6 +45,15 @@ let circuitLayout = {};
 let circuitCables = [];
 let circuitDrag;
 let pendingTerminal;
+const cameraState = { yaw: 0, pitch: .43, radius: 14.3, drag: undefined };
+
+function updateCamera() {
+  const horizontal = cameraState.radius * Math.cos(cameraState.pitch);
+  camera.position.set(horizontal * Math.sin(cameraState.yaw), cameraState.radius * Math.sin(cameraState.pitch), horizontal * Math.cos(cameraState.yaw));
+  camera.lookAt(0, 0, 0);
+}
+
+function resetCamera() { cameraState.yaw = 0; cameraState.pitch = .43; cameraState.radius = 14.3; updateCamera(); }
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
@@ -725,6 +734,11 @@ window.physics3d = {
 };
 
 renderer.domElement.addEventListener("pointerdown", (event) => {
+  if (experimentId !== "circuitBuilder" || event.shiftKey) {
+    cameraState.drag = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
+    renderer.domElement.setPointerCapture(event.pointerId);
+    return;
+  }
   if (experimentId !== "circuitBuilder") return;
   const object = circuitObjectAt(event);
   if (object?.userData.terminal) {
@@ -742,6 +756,14 @@ renderer.domElement.addEventListener("pointerdown", (event) => {
 });
 
 renderer.domElement.addEventListener("pointermove", (event) => {
+  if (cameraState.drag) {
+    cameraState.yaw -= (event.clientX - cameraState.drag.x) * .012;
+    cameraState.pitch = THREE.MathUtils.clamp(cameraState.pitch + (event.clientY - cameraState.drag.y) * .012, -.45, 1.15);
+    cameraState.drag.x = event.clientX;
+    cameraState.drag.y = event.clientY;
+    updateCamera();
+    return;
+  }
   if (!circuitDrag) return;
   setCircuitPointer(event);
   const point = new THREE.Vector3();
@@ -756,14 +778,23 @@ renderer.domElement.addEventListener("pointermove", (event) => {
 });
 
 renderer.domElement.addEventListener("pointerup", (event) => {
+  if (cameraState.drag) {
+    cameraState.drag = undefined;
+    if (renderer.domElement.hasPointerCapture(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId);
+    return;
+  }
   if (!circuitDrag) return;
   circuitDrag = undefined;
   if (renderer.domElement.hasPointerCapture(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId);
 });
 
+renderer.domElement.addEventListener("wheel", (event) => { event.preventDefault(); cameraState.radius = THREE.MathUtils.clamp(cameraState.radius + event.deltaY * .012, 6, 28); updateCamera(); }, { passive: false });
+document.querySelector("[data-camera-reset='physics']").addEventListener("click", resetCamera);
+
 window.addEventListener("resize", resize);
 
 resize();
+resetCamera();
 
 construct("accelerator");
 

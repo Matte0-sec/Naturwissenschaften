@@ -59,7 +59,7 @@
             <p id="bioDescription" class="sim-description"></p>
             <section class="explanation-box biology-explanation" aria-label="Erklärung zum Biologieexperiment"><h3>Was passiert?</h3><p id="bioExplanation"></p></section>
             <div class="visual-mode"><span>Ansicht</span><button id="bioTwoDimensional" class="active" type="button">2D</button><button id="bioThreeDimensional" type="button">3D</button></div>
-            <div id="biologyThreeViewport" class="three-viewport" hidden aria-label="Dreidimensionale Darstellung des Biologie-Experiments"></div>
+            <div id="biologyThreeViewport" class="three-viewport" hidden aria-label="Dreidimensionale Darstellung des Biologie-Experiments"><span class="camera-hint">Ziehen: drehen · Mausrad: zoomen</span><button class="camera-reset" type="button" data-camera-reset="biology" title="Kamera zurücksetzen" aria-label="Kamera zurücksetzen">↺</button></div>
             <canvas id="biologyCanvas" width="760" height="420" aria-label="Biologie-Simulation"></canvas>
             <div id="virusSelectors" class="virus-selectors" hidden aria-label="Organ und Virus auswählen"></div>
             <div id="muscleSelectors" class="muscle-selectors" hidden aria-label="Muskeltraining auswählen"></div>
@@ -100,7 +100,7 @@
             <section class="explanation-box" aria-label="Erklärung zum Experiment"><h3>Was passiert?</h3><p id="simExplanation"></p></section>
             <div class="visual-mode"><span>Ansicht</span><button id="twoDimensional" class="active" type="button">2D</button><button id="threeDimensional" type="button">3D</button></div>
             <section id="circuitBuilder" class="circuit-builder" hidden aria-label="Stromkreis aufbauen"></section>
-            <div id="threeViewport" class="three-viewport" hidden aria-label="Dreidimensionale Darstellung des Physik-Experiments"></div>
+            <div id="threeViewport" class="three-viewport" hidden aria-label="Dreidimensionale Darstellung des Physik-Experiments"><span class="camera-hint">Ziehen: drehen · Mausrad: zoomen · Stromkreis: Shift+Ziehen</span><button class="camera-reset" type="button" data-camera-reset="physics" title="Kamera zurücksetzen" aria-label="Kamera zurücksetzen">↺</button></div>
             <canvas id="simulationCanvas" width="760" height="420" aria-label="Physik-Simulation"></canvas>
             <div id="measurements" class="measurements"></div>
             <div class="simulation-bottom"><div id="parameterControls" class="parameter-controls"></div></div>
@@ -131,7 +131,7 @@
             <p id="chemDescription" class="sim-description"></p>
             <section class="explanation-box chemistry-explanation" aria-label="Erklärung zum Experiment"><h3>Was passiert?</h3><p id="chemExplanation"></p></section>
             <div id="chemVisualMode" class="visual-mode" hidden><span>Ansicht</span><button id="chemTwoDimensional" class="active" type="button">2D</button><button id="chemThreeDimensional" type="button">3D</button></div>
-            <div id="chemistryThreeViewport" class="three-viewport" hidden aria-label="Dreidimensionaler Vergleich des Materials vor und nach der Säurereaktion"></div>
+            <div id="chemistryThreeViewport" class="three-viewport" hidden aria-label="Dreidimensionaler Vergleich des Materials vor und nach der Säurereaktion"><span class="camera-hint">Ziehen: drehen · Mausrad: zoomen</span><button class="camera-reset" type="button" data-camera-reset="chemistry" title="Kamera zurücksetzen" aria-label="Kamera zurücksetzen">↺</button></div>
             <canvas id="chemistryCanvas" width="760" height="420" aria-label="Chemie-Simulation"></canvas>
             <div id="chemMeasurements" class="measurements"></div>
             <div class="simulation-bottom"><div id="chemControls" class="parameter-controls"></div></div>

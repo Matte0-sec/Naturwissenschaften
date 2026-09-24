@@ -371,6 +371,47 @@ document.querySelector("#homeButton").addEventListener("click", () => {
   document.querySelector("#homeScreen").hidden = false;
 });
 
+const gamesDialog = document.querySelector("#gamesDialog");
+const targetBoard = document.querySelector("#targetBoard");
+const targetDot = document.querySelector("#targetDot");
+const targetScore = document.querySelector("#targetScore");
+let targetHits = 0;
+let pattern = [];
+let patternIndex = 0;
+let patternPlaying = false;
+
+function moveTarget() {
+  targetDot.style.left = `${8 + Math.random() * (targetBoard.clientWidth - 54)}px`;
+  targetDot.style.top = `${8 + Math.random() * (targetBoard.clientHeight - 54)}px`;
+}
+
+function showPattern() {
+  patternPlaying = true;
+  document.querySelector("#patternMessage").textContent = "Muster anschauen ...";
+  pattern.forEach((item, index) => window.setTimeout(() => {
+    const tile = document.querySelector(`[data-pattern="${item}"]`);
+    tile.classList.add("lit");
+    window.setTimeout(() => tile.classList.remove("lit"), 340);
+  }, 550 * (index + 1)));
+  window.setTimeout(() => { patternPlaying = false; document.querySelector("#patternMessage").textContent = "Jetzt bist du dran."; }, 550 * (pattern.length + 1));
+}
+
+function startPattern() { pattern = [Math.floor(Math.random() * 4)]; patternIndex = 0; document.querySelector("#patternScore").textContent = "0"; showPattern(); }
+
+document.querySelector("#secretGamesButton").addEventListener("click", () => { gamesDialog.hidden = false; moveTarget(); });
+document.querySelector("#gamesClose").addEventListener("click", () => { gamesDialog.hidden = true; });
+document.querySelectorAll("[data-game]").forEach((button) => button.addEventListener("click", () => { document.querySelectorAll("[data-game]").forEach((item) => item.classList.toggle("active", item === button)); document.querySelector("#targetGame").hidden = button.dataset.game !== "target"; document.querySelector("#patternGame").hidden = button.dataset.game !== "pattern"; }));
+document.querySelector("#targetRestart").addEventListener("click", () => { targetHits = 0; targetScore.textContent = targetHits; moveTarget(); });
+targetDot.addEventListener("click", () => { targetHits += 1; targetScore.textContent = targetHits; moveTarget(); });
+document.querySelector("#patternStart").addEventListener("click", startPattern);
+document.querySelectorAll("[data-pattern]").forEach((tile) => tile.addEventListener("click", () => {
+  if (patternPlaying || !pattern.length) return;
+  const choice = Number(tile.dataset.pattern);
+  if (choice !== pattern[patternIndex]) { document.querySelector("#patternMessage").textContent = "Nicht ganz. Starte ein neues Muster."; pattern = []; return; }
+  patternIndex += 1;
+  if (patternIndex === pattern.length) { pattern.push(Math.floor(Math.random() * 4)); patternIndex = 0; document.querySelector("#patternScore").textContent = pattern.length - 1; showPattern(); }
+}));
+
 for (let index = 0; index < 16; index += 1) {
   const bubble = document.createElement("i");
   bubble.style.left = `${8 + (index * 23) % 78}%`;

@@ -223,6 +223,24 @@
     </section>
     </div>
   </main>
+  <button id="secretGamesButton" class="secret-games-button" type="button" aria-label="Lautlose Spiele öffnen" title="Lautlose Spiele">+</button>
+  <section id="gamesDialog" class="games-dialog" hidden aria-labelledby="gamesTitle">
+    <div class="games-panel" role="dialog" aria-modal="true">
+      <div class="quiz-header"><div><p class="eyebrow">Lautloser Pausenmodus</p><h2 id="gamesTitle">Mini-Spiele</h2></div><button id="gamesClose" class="tool-button" type="button" title="Spiele schließen" aria-label="Spiele schließen">×</button></div>
+      <div class="game-tabs" role="group" aria-label="Spiel auswählen"><button class="active" type="button" data-game="target">Punktjagd</button><button type="button" data-game="pattern">Muster merken</button></div>
+      <section id="targetGame" class="game-view">
+        <p>Triff den farbigen Punkt so oft du kannst. Komplett lautlos.</p>
+        <div class="game-status"><span>Treffer <b id="targetScore">0</b></span><button id="targetRestart" type="button">Neu starten</button></div>
+        <div id="targetBoard" class="target-board" aria-label="Spielfeld Punktjagd"><button id="targetDot" type="button" aria-label="Zielpunkt"></button></div>
+      </section>
+      <section id="patternGame" class="game-view" hidden>
+        <p>Merke dir die leuchtenden Felder und klicke sie in derselben Reihenfolge an.</p>
+        <div class="game-status"><span>Runde <b id="patternScore">0</b></span><button id="patternStart" type="button">Muster starten</button></div>
+        <div id="patternBoard" class="pattern-board" aria-label="Spielfeld Muster merken"><button type="button" data-pattern="0"></button><button type="button" data-pattern="1"></button><button type="button" data-pattern="2"></button><button type="button" data-pattern="3"></button></div>
+        <p id="patternMessage" class="game-message">Starte, um ein Muster zu sehen.</p>
+      </section>
+    </div>
+  </section>
   <script type="module" src="three-physics.js"></script>
   <script src="physics.js"></script>
   <script type="module" src="chemistry-three.js"></script>

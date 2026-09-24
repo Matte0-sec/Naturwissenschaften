@@ -36,6 +36,7 @@
           <span class="subject-symbol">DNA</span><span><b>Biologie</b><small>Zellen, Energie & Ökosysteme</small></span><em>→</em>
         </button>
       </div>
+      <div class="protocol-home-actions"><button id="protocolOpen" class="protocol-home-button" type="button">Experiment-Protokoll</button><button id="protocolListOpen" class="protocol-list-button" type="button">Alle Protokolle</button></div>
     </section>
 
     <section id="biologyPlatform" class="physics-platform biology-platform" hidden aria-labelledby="biologyPlatformTitle">
@@ -224,6 +225,21 @@
     </div>
   </main>
   <button id="secretGamesButton" class="secret-games-button" type="button" aria-label="Lautlose Spiele öffnen" title="Lautlose Spiele">+</button>
+  <section id="protocolDialog" class="quiz-dialog" hidden aria-labelledby="protocolTitle">
+    <div class="quiz-panel protocol-panel" role="dialog" aria-modal="true">
+      <div class="quiz-header"><div><p class="eyebrow">Dein Laborbuch</p><h2 id="protocolTitle">Experiment-Protokoll</h2></div><button id="protocolClose" class="tool-button" type="button" title="Protokolle schließen" aria-label="Protokolle schließen">×</button></div>
+      <div class="protocol-tabs" role="group" aria-label="Protokollansicht auswählen"><button class="active" type="button" data-protocol-view="write">Protokoll schreiben</button><button type="button" data-protocol-view="list">Alle Protokolle</button></div>
+      <form id="protocolForm" class="protocol-form">
+        <label>Fach<select id="protocolSubject" required><option value="">Fach auswählen</option><option value="physics">Physik</option><option value="chemistry">Chemie</option><option value="biology">Biologie</option></select></label>
+        <label>Experiment<select id="protocolExperiment" required disabled><option value="">Zuerst ein Fach auswählen</option></select></label>
+        <label>Meine Beobachtungen<textarea id="protocolObservations" required maxlength="1500" placeholder="Was hast du verändert? Was ist passiert?"></textarea></label>
+        <label>Meine Erkenntnis<textarea id="protocolFindings" required maxlength="1000" placeholder="Was stellst du fest? Was könnte die Ursache sein?"></textarea></label>
+        <p id="protocolNotice" class="protocol-notice" hidden></p>
+        <button class="primary-button" type="submit">Protokoll speichern</button>
+      </form>
+      <section id="protocolList" class="protocol-list" hidden aria-label="Gespeicherte Experiment-Protokolle"></section>
+    </div>
+  </section>
   <section id="gamesDialog" class="games-dialog" hidden aria-labelledby="gamesTitle">
     <div class="games-panel" role="dialog" aria-modal="true">
       <div class="quiz-header"><div><p class="eyebrow">Lautloser Pausenmodus</p><h2 id="gamesTitle">Mini-Spiele</h2></div><button id="gamesClose" class="tool-button" type="button" title="Spiele schließen" aria-label="Spiele schließen">×</button></div>

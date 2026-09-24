@@ -371,6 +371,50 @@ document.querySelector("#homeButton").addEventListener("click", () => {
   document.querySelector("#homeScreen").hidden = false;
 });
 
+const protocolDialog = document.querySelector("#protocolDialog");
+const protocolForm = document.querySelector("#protocolForm");
+const protocolSubject = document.querySelector("#protocolSubject");
+const protocolExperiment = document.querySelector("#protocolExperiment");
+const protocolList = document.querySelector("#protocolList");
+const protocolKey = "scienceLabProtocols";
+const subjectNames = { physics: "Physik", chemistry: "Chemie", biology: "Biologie" };
+const protocolCatalog = {
+  physics: ["Teilchenbeschleuniger", "Elektrizität", "Stromkreis bauen", "Elektromagnet", "Orbitale Gravitation", "Raketenstart", "Luftwiderstand", "Wasserwellen", "Wärmeübertragung", "Kollisionen", "Doppelpendel", "Schwarzes Loch", "Optik-Labor", "Projektilbewegung"],
+  chemistry: ["Säure-Base-Titration", "Säurewirkung auf Materialien", "Reaktionsgeschwindigkeit", "Chemisches Gleichgewicht", "Elektrolyse", "Ideales Gas", "Kalorimetrie", "Löslichkeit", "Redox-Zelle", "Molekülgeometrie", "Radioaktiver Zerfall"],
+  biology: ["Photosynthese", "Enzymaktivität", "Osmose", "Strahlenwirkung auf Zellgewebe", "Viren im Organ", "Muskelaufbau", "Zellatmung", "Populationswachstum"],
+};
+let protocols = JSON.parse(localStorage.getItem(protocolKey) || "[]");
+
+function protocolExperiments(subject) {
+  const selector = subject === "physics" ? "#experimentCards [data-id]" : subject === "chemistry" ? "#chemistryCards [data-chem-id]" : "#biologyCards [data-bio-id]";
+  const cards = [...document.querySelectorAll(selector)].map((card) => ({ id: card.dataset.id || card.dataset.chemId || card.dataset.bioId, title: card.querySelector("b")?.textContent || "Experiment" }));
+  return cards.length ? cards : (protocolCatalog[subject] || []).map((title) => ({ id: title, title }));
+}
+
+function setProtocolView(view) {
+  document.querySelectorAll("[data-protocol-view]").forEach((button) => button.classList.toggle("active", button.dataset.protocolView === view));
+  protocolForm.hidden = view !== "write";
+  protocolList.hidden = view !== "list";
+  if (view === "list") renderProtocols();
+}
+
+function escapeProtocolText(text) { return text.replace(/[&<>"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character]); }
+
+function renderProtocols() {
+  const sorted = [...protocols].sort((left, right) => `${left.subject}${left.experiment}`.localeCompare(`${right.subject}${right.experiment}`, "de"));
+  if (!sorted.length) { protocolList.innerHTML = '<p class="protocol-empty">Noch keine Protokolle gespeichert. Schreibe dein erstes nach einem Experiment.</p>'; return; }
+  const groups = sorted.reduce((result, entry) => { const key = `${entry.subject}|${entry.experiment}`; (result[key] ||= []).push(entry); return result; }, {});
+  protocolList.innerHTML = Object.entries(groups).map(([key, entries]) => { const [subject, experiment] = key.split("|"); return `<section class="protocol-group"><h3>${subjectNames[subject]} · ${escapeProtocolText(experiment)}</h3>${entries.map((entry) => `<article class="protocol-entry"><small>${escapeProtocolText(entry.date)}</small><p><b>Beobachtung</b>${escapeProtocolText(entry.observations)}</p><p><b>Erkenntnis</b>${escapeProtocolText(entry.findings)}</p></article>`).join("")}</section>`; }).join("");
+}
+
+function openProtocols(view) { protocolDialog.hidden = false; setProtocolView(view); }
+document.querySelector("#protocolOpen").addEventListener("click", () => openProtocols("write"));
+document.querySelector("#protocolListOpen").addEventListener("click", () => openProtocols("list"));
+document.querySelector("#protocolClose").addEventListener("click", () => { protocolDialog.hidden = true; });
+document.querySelectorAll("[data-protocol-view]").forEach((button) => button.addEventListener("click", () => setProtocolView(button.dataset.protocolView)));
+protocolSubject.addEventListener("change", () => { const experiments = protocolSubject.value ? protocolExperiments(protocolSubject.value) : []; protocolExperiment.disabled = !experiments.length; protocolExperiment.innerHTML = `<option value="">Experiment auswählen</option>${experiments.map((experiment) => `<option value="${experiment.title}">${experiment.title}</option>`).join("")}`; });
+protocolForm.addEventListener("submit", (event) => { event.preventDefault(); const observations = document.querySelector("#protocolObservations").value.trim(); const findings = document.querySelector("#protocolFindings").value.trim(); protocols.push({ subject: protocolSubject.value, experiment: protocolExperiment.value, observations, findings, date: new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" }).format(new Date()) }); localStorage.setItem(protocolKey, JSON.stringify(protocols)); protocolForm.reset(); protocolExperiment.disabled = true; protocolExperiment.innerHTML = '<option value="">Zuerst ein Fach auswählen</option>'; const notice = document.querySelector("#protocolNotice"); notice.textContent = "Protokoll gespeichert."; notice.hidden = false; });
+
 const gamesDialog = document.querySelector("#gamesDialog");
 const targetBoard = document.querySelector("#targetBoard");
 const targetDot = document.querySelector("#targetDot");

@@ -110,7 +110,12 @@ const learningProfiles = {
   },
 };
 
-let learningProfile = "school";
+const learningProfileKey = "scienceLabLearningProfile";
+const savedLearningProfile = localStorage.getItem(learningProfileKey);
+let learningProfile = Object.prototype.hasOwnProperty.call(learningProfiles, savedLearningProfile) ? savedLearningProfile : "school";
+document.querySelectorAll("[data-profile]").forEach((button) => {
+  button.classList.toggle("active", button.dataset.profile === learningProfile);
+});
 window.labTeaching = {
   explanation(text) { return learningProfiles[learningProfile].explanation(text); },
   question(text, id) { return learningProfiles[learningProfile].question(text, id); },
@@ -146,6 +151,7 @@ window.labTeaching = {
 
 const quizDialog = document.querySelector("#quizDialog");
 const quizSubject = document.querySelector("#quizSubject");
+const quizTitle = document.querySelector("#quizTitle");
 const quizIntro = document.querySelector("#quizIntro");
 const quizExperimentList = document.querySelector("#quizExperimentList");
 const quizQuestions = document.querySelector("#quizQuestions");
@@ -156,9 +162,110 @@ const achievementDialog = document.querySelector("#achievementDialog");
 const achievementSummary = document.querySelector("#achievementSummary");
 const achievementBadges = document.querySelector("#achievementBadges");
 let quizExperiments = [];
+let dailyQuizQuestionsForRun = null;
 const achievementKey = "scienceLabQuizProgress";
 const emptyQuizProgress = () => ({ points: 0, solved: 0, lastLevel: "Noch kein Quiz", badges: [] });
 let quizProgress = JSON.parse(localStorage.getItem(achievementKey) || JSON.stringify(emptyQuizProgress()));
+const dailyQuizKey = "scienceLabDailyQuiz";
+const dailyQuizButton = document.querySelector("#dailyQuizButton");
+
+const dailyQuestionBank = {
+  school: [
+    { prompt: "Ein warmer Körper steht neben einem kalten. In welche Richtung fließt Wärme zuerst?", answer: "Vom warmen zum kalten Körper.", wrong: ["Vom kalten zum warmen Körper.", "Beide Körper geben keine Wärme ab.", "Wärme fließt nur, wenn beide gleich warm sind."] },
+    { prompt: "Was passiert mit dem Strom, wenn bei gleicher Spannung der Widerstand kleiner wird?", answer: "Der Strom wird größer.", wrong: ["Der Strom wird kleiner.", "Der Strom bleibt immer gleich.", "Der Strom hört ganz auf zu fließen."] },
+    { prompt: "Welchen pH-Wert hat eine neutrale Lösung ungefähr?", answer: "pH 7", wrong: ["pH 2", "pH 5", "pH 12"] },
+    { prompt: "Was braucht eine Pflanze für die Photosynthese?", answer: "Licht und Kohlenstoffdioxid.", wrong: ["Nur Sauerstoff.", "Nur Zucker und Dunkelheit.", "Salz und keinen Wasserbedarf."] },
+    { prompt: "Wohin bewegt sich Wasser bei der Osmose bevorzugt?", answer: "Zur Seite mit mehr gelösten Teilchen.", wrong: ["Immer aus der Zelle heraus.", "Immer zur Seite mit weniger gelösten Teilchen.", "Es bewegt sich nur, wenn die Membran fehlt."] },
+    { prompt: "Was kann mit einem Enzym bei zu hoher Temperatur passieren?", answer: "Seine Form verändert sich und es arbeitet schlechter.", wrong: ["Es wird zu einem neuen Substrat.", "Es wird bei jeder Temperatur immer schneller.", "Es verwandelt sich vollständig in Wasser."] },
+    { prompt: "Was geschieht mit dem Gasdruck, wenn ein Gas bei gleicher Temperatur weniger Platz hat?", answer: "Der Druck steigt.", wrong: ["Der Druck sinkt immer auf null.", "Der Druck bleibt unabhängig vom Volumen gleich.", "Das Gas wird automatisch flüssig."] },
+    { prompt: "Was bedeutet eine Halbwertszeit bei radioaktiven Teilchen?", answer: "Nach dieser Zeit ist ungefähr die Hälfte der ursprünglichen Teilchen übrig.", wrong: ["Alle Teilchen sind zerfallen.", "Die Anzahl hat sich verdoppelt.", "Jedes Teilchen wird genau halb so groß."] },
+    { prompt: "Wann kann Strom durch einen einfachen Stromkreis fließen?", answer: "Wenn der Stromkreis geschlossen ist.", wrong: ["Wenn der Schalter geöffnet ist.", "Nur wenn die Lampe entfernt wurde.", "Nur bei unterbrochenen Kabeln."] },
+    { prompt: "Was passiert mit einer sauren Lösung, wenn man vorsichtig Lauge zugibt?", answer: "Der pH-Wert bewegt sich in Richtung neutral.", wrong: ["Der pH-Wert sinkt immer weiter.", "Die Lösung wird automatisch zu reinem Wasser.", "Der pH-Wert bleibt grundsätzlich unverändert."] },
+    { prompt: "Was passiert mit einem fallengelassenen Gegenstand nahe der Erdoberfläche?", answer: "Die Schwerkraft beschleunigt ihn nach unten.", wrong: ["Die Schwerkraft zieht ihn nach oben.", "Er bleibt ohne weitere Kräfte immer an derselben Stelle.", "Seine Masse verschwindet während des Falls."] },
+    { prompt: "Welche Aussage über eine Nahrungskette ist richtig?", answer: "Energie wird von einem Lebewesen zum nächsten weitergegeben.", wrong: ["Alle Lebewesen erhalten Energie nur direkt aus dem Boden.", "Energie entsteht erst am Ende der Nahrungskette.", "Pflanzen können keine Energie speichern."] },
+    { prompt: "Was zeigt ein Thermometer beim Erwärmen eines Stoffes normalerweise an?", answer: "Eine höhere Temperatur.", wrong: ["Eine niedrigere Masse.", "Einen kleineren pH-Wert.", "Eine geringere Stoffmenge."] },
+    { prompt: "Was kann passieren, wenn man mehr Salz in Wasser gibt, als sich lösen kann?", answer: "Ein Teil des Salzes bleibt ungelöst zurück.", wrong: ["Das Wasser wird zu einem Gas.", "Das Salz verschwindet unabhängig von der Wassermenge immer vollständig.", "Die Lösung wird automatisch sauer."] },
+    { prompt: "Was brauchen die meisten Tiere als unmittelbare Energiequelle für ihre Bewegung?", answer: "Energie aus der Nahrung.", wrong: ["Nur Sonnenlicht direkt auf den Muskeln.", "Ausschließlich Mineralstoffe.", "Keinen Sauerstoff oder Nährstoffe."] },
+  ],
+  basic: [
+    { prompt: "Eine Batterie liefert 12 V. Der Widerstand wird von 6 Ω auf 3 Ω halbiert. Was passiert mit der Stromstärke?", answer: "Sie verdoppelt sich von 2 A auf 4 A.", wrong: ["Sie halbiert sich von 2 A auf 1 A.", "Sie bleibt bei 2 A.", "Sie steigt auf 18 A."] },
+    { prompt: "Dieselbe Wärmemenge erwärmt entweder 100 g oder 50 g Wasser. Welche Probe wird stärker erwärmt?", answer: "Die 50-g-Probe, ungefähr doppelt so stark.", wrong: ["Die 100-g-Probe, ungefähr doppelt so stark.", "Beide gleich stark, unabhängig von der Masse.", "Keine, denn Wasser kann keine Wärme aufnehmen."] },
+    { prompt: "Die Sauerstoffproduktion steigt erst mit mehr Licht, erreicht dann aber ein Plateau. Was ist eine passende Erklärung?", answer: "Ein anderer Faktor wie CO₂ oder Temperatur begrenzt nun die Photosynthese.", wrong: ["Licht wird ab diesem Punkt zu Kohlenstoffdioxid.", "Die Pflanze hat aufgehört, Wasser zu benötigen.", "Mehr Licht senkt immer sofort die Temperatur."] },
+    { prompt: "Warum kann ein Enzym bei stark verändertem pH-Wert weniger Substrat umsetzen?", answer: "Die Ladungen und die Form des aktiven Zentrums können sich verändern.", wrong: ["Der pH-Wert entfernt alle Substrate aus der Lösung.", "Enzyme reagieren ausschließlich mit Sauerstoff.", "Der pH-Wert verändert nur die Farbe, nie die Funktion."] },
+    { prompt: "Zu einer reversiblen Reaktion wird mehr Ausgangsstoff gegeben. Welche Verschiebung ist typischerweise zu erwarten?", answer: "Das Gleichgewicht verschiebt sich in Richtung der Produkte.", wrong: ["Es gibt danach grundsätzlich keine Rückreaktion mehr.", "Das Gleichgewicht verschiebt sich immer zu den Ausgangsstoffen.", "Die Stoffmenge aller Produkte muss sofort null werden."] },
+    { prompt: "Die absolute Temperatur eines idealen Gases steigt von 300 K auf 600 K. Wie verändert sich die mittlere Bewegungsenergie der Teilchen?", answer: "Sie verdoppelt sich.", wrong: ["Sie halbiert sich.", "Sie bleibt unverändert.", "Sie vervierfacht sich."] },
+    { prompt: "Zwei Widerstände von 4 Ω und 6 Ω sind in Reihe geschaltet. Wie groß ist der Gesamtwiderstand?", answer: "10 Ω", wrong: ["2,4 Ω", "6 Ω", "24 Ω"] },
+    { prompt: "Eine radioaktive Probe durchläuft drei Halbwertszeiten. Welcher Anteil der Anfangsmenge bleibt ungefähr?", answer: "12,5 %", wrong: ["25 %", "37,5 %", "75 %"] },
+    { prompt: "Eine Zelle kommt in eine stärker konzentrierte Außenlösung. Was ist aufgrund der Osmose zu erwarten?", answer: "Wasser verlässt die Zelle und ihr Volumen kann abnehmen.", wrong: ["Wasser strömt ausschließlich in die Zelle.", "Gelöste Teilchen passieren immer frei die Membran.", "Die Konzentrationsunterschiede werden sofort größer."] },
+    { prompt: "Ein Strom von 2 A fließt 5 Sekunden lang. Welche Ladungsmenge fließt durch den Leiter?", answer: "10 C", wrong: ["2,5 C", "7 C", "25 C"] },
+    { prompt: "Eine saure Lösung wird mit Wasser verdünnt. Was geschieht typischerweise mit ihrem pH-Wert?", answer: "Er nähert sich 7 an.", wrong: ["Er entfernt sich immer weiter von 7.", "Er wird unabhängig von der Säure sofort genau 7.", "Er bleibt bei jeder Verdünnung exakt gleich."] },
+    { prompt: "Ein Fahrzeug fährt mit gleichbleibender Geschwindigkeit doppelt so lange. Wie verändert sich die zurückgelegte Strecke?", answer: "Sie verdoppelt sich.", wrong: ["Sie halbiert sich.", "Sie bleibt gleich.", "Sie vervierfacht sich."] },
+    { prompt: "Zwei Lampen sind in Reihe geschaltet. Was passiert, wenn eine Lampe herausgedreht wird?", answer: "Der Stromkreis ist unterbrochen und beide Lampen gehen aus.", wrong: ["Die andere Lampe leuchtet unverändert weiter.", "Die Spannung der Batterie wird null.", "Der Strom fließt durch die Luft weiter."] },
+    { prompt: "Bei einer exothermen Reaktion wird mehr Ausgangsstoff zugegeben. Was ist nach einer neuen Gleichgewichtseinstellung zu erwarten?", answer: "Die Produktbildung wird begünstigt.", wrong: ["Es kann grundsätzlich kein Gleichgewicht mehr entstehen.", "Die Reaktion wird zwingend vollständig rückwärts laufen.", "Die Temperatur muss dabei sinken."] },
+    { prompt: "Bei gleicher Temperatur und gleichem Druck wird die Stoffmenge eines idealen Gases verdoppelt. Was passiert mit dem Volumen?", answer: "Es verdoppelt sich.", wrong: ["Es halbiert sich.", "Es bleibt gleich.", "Es vervierfacht sich."] },
+  ],
+  advanced: [
+    { prompt: "Bei 12 V fließen durch einen 6-Ω-Widerstand 2 A und durch einen 3-Ω-Widerstand 4 A. Was zeigt dieser Vergleich?", answer: "Bei gleicher Spannung fließt durch den kleineren Widerstand mehr Strom.", wrong: ["Bei gleicher Spannung fließt durch den größeren Widerstand mehr Strom.", "Der Widerstand hat keinen Einfluss auf den Strom.", "Die Spannung am kleineren Widerstand muss halb so groß sein."] },
+    { prompt: "Zwei gleich große Wasserproben bekommen gleich viel Wärme. Probe A hat nur halb so viel Wasser wie Probe B. Welche Probe wird wärmer?", answer: "Probe A wird etwa doppelt so stark erwärmt.", wrong: ["Probe B wird etwa doppelt so stark erwärmt.", "Beide werden gleich stark erwärmt.", "Nur die Farbe des Gefäßes entscheidet darüber."] },
+    { prompt: "Bei mehr Licht steigt die Fotosynthese. Mehr CO₂ ändert die Rate kaum. Was solltest du als Nächstes testen?", answer: "CO₂ bei mehreren Lichtstärken testen und die Temperatur gleich halten.", wrong: ["Licht und CO₂ gleichzeitig ändern und nur einmal messen.", "Bei jeder Messung auch die Temperatur ändern.", "Nur die Pflanzenfarbe ohne Messwerte vergleichen."] },
+    { prompt: "Ein Enzym arbeitet bei pH 7 gut, bei pH 3 aber kaum. Was könnte der Grund sein?", answer: "Der pH-Wert kann die Form des Enzyms und damit seine Arbeit verändern.", wrong: ["Bei pH 3 gibt es grundsätzlich kein Wasser.", "Das Enzym wird bei pH 7 bei jeder Reaktion verbraucht.", "Ein anderer pH-Wert kann nur das Messgerät beeinflussen."] },
+    { prompt: "Eine Reaktion gibt Wärme ab. Was passiert mit ihrem Gleichgewicht, wenn du sie erwärmst?", answer: "Es verschiebt sich in die Richtung, die Wärme aufnimmt.", wrong: ["Es verschiebt sich immer in die Richtung, die Wärme abgibt.", "Es verschiebt sich unabhängig von der Reaktion immer zu den Produkten.", "Die Reaktion stoppt dauerhaft."] },
+    { prompt: "Ein Gas wird bei gleicher Temperatur auf die Hälfte seines Volumens gedrückt. Wie ändert sich sein Druck?", answer: "Der Druck verdoppelt sich.", wrong: ["Der Druck halbiert sich.", "Der Druck bleibt gleich.", "Der Druck vervierfacht sich."] },
+    { prompt: "Eine Probe hat eine Halbwertszeit von 8 Tagen. Wie viel bleibt nach 24 Tagen übrig?", answer: "Ein Achtel, also 12,5 %.", wrong: ["Ein Viertel, also 25 %.", "Die Hälfte, also 50 %.", "Nichts, weil nach drei Halbwertszeiten alles zerfallen ist."] },
+    { prompt: "Ein Katalysator beschleunigt eine Reaktion in beide Richtungen. Was ändert sich dadurch?", answer: "Das Gleichgewicht wird schneller erreicht, bleibt aber an derselben Stelle.", wrong: ["Das Gleichgewicht verschiebt sich immer zu den Produkten.", "Das Gleichgewicht verschiebt sich immer zu den Ausgangsstoffen.", "Die Rückreaktion wird dauerhaft verhindert."] },
+    { prompt: "Eine Population wächst erst schnell und wird dann kaum noch größer. Was erklärt das am besten?", answer: "Die Umwelt bietet nur begrenzt Platz und Nahrung.", wrong: ["Es gibt immer mehr freie Ressourcen.", "Die Population verdoppelt sich unabhängig von ihrer Größe.", "Jedes Lebewesen hat eine Halbwertszeit."] },
+    { prompt: "Ein Körper legt 150 m in 30 s zurück. Welche mittlere Geschwindigkeit ergibt sich?", answer: "5 m/s", wrong: ["0,2 m/s", "120 m/s", "180 m/s"] },
+    { prompt: "In einem Reihenstromkreis liegen 12 V an zwei gleichen Widerständen. Wie teilt sich die Spannung idealisiert auf?", answer: "Jeder Widerstand hat 6 V.", wrong: ["Ein Widerstand hat 12 V und der andere 0 V.", "Jeder Widerstand hat 24 V.", "Die Spannung lässt sich in einer Reihenschaltung nicht aufteilen."] },
+    { prompt: "Du willst testen, wie Licht und CO₂ die Fotosynthese beeinflussen. Wie findest du heraus, was jeder Faktor bewirkt?", answer: "Immer nur einen Faktor ändern, den anderen gleich halten und mehrmals messen.", wrong: ["Beide Faktoren gleichzeitig ändern und nur einmal messen.", "Bei jeder Messung auch die Temperatur zufällig ändern.", "Nur bei stärkstem Licht messen und daraus alles ableiten."] },
+    { prompt: "Mehrere Messungen der Reaktionsgeschwindigkeit sind leicht verschieden. Wie wertest du sie am besten aus?", answer: "Den Mittelwert bilden und die Unterschiede als Unsicherheit beachten.", wrong: ["Nur den höchsten Messwert verwenden.", "Alle leicht abweichenden Werte verwerfen.", "Eine Messung als sicher richtig ansehen und den Rest ignorieren."] },
+    { prompt: "Du misst, wie viel Wärme Wasser aufgenommen hat. Welche Angaben brauchst du dafür zusätzlich zur Temperaturänderung?", answer: "Die Wassermenge und wie viel Wärme eine bestimmte Wassermenge aufnimmt.", wrong: ["Nur die Farbe des Gefäßes.", "Nur den pH-Wert des Wassers.", "Nur die Länge des Thermometers."] },
+    { prompt: "In einem geschlossenen Gefäß reagieren Stoffe miteinander. Welche Masse bleibt gleich?", answer: "Die Gesamtmasse aller Stoffe zusammen.", wrong: ["Die Masse jedes einzelnen Ausgangsstoffs.", "Die Anzahl der Teilchen jeder einzelnen Stoffart.", "Die Temperatur im Gefäß."] },
+  ],
+  expert: [
+    { prompt: "Zwei Widerstände (6 Ω und 3 Ω) sind parallel an 12 V angeschlossen. Wie viel Strom fließt insgesamt?", answer: "6 A, denn der Ersatzwiderstand beträgt 2 Ω.", wrong: ["2 A, denn parallele Widerstände werden addiert.", "4 A, denn nur der 3-Ω-Zweig führt Strom.", "18 A, denn die Widerstände werden mit der Spannung multipliziert."] },
+    { prompt: "0,20 kg Wasser werden um 5 K wärmer. Für Wasser gilt c = 4,2 kJ/(kg·K). Wie viel Wärme nimmt es auf?", answer: "4,2 kJ", wrong: ["0,84 kJ", "2,1 kJ", "21 kJ"] },
+    { prompt: "Nach jeder Halbwertszeit bleibt die Hälfte einer Probe übrig. Nach drei solchen Zeiträumen sind noch 12,5 % da. Welche Aussage passt dazu?", answer: "Die Probe zerfällt nach einer gleichbleibenden Halbwertszeit immer weiter.", wrong: ["Die Probe verliert jeden Tag dieselbe Menge.", "Jedes Atom zerfällt genau nach drei Halbwertszeiten.", "Die Halbwertszeit wird nach jedem Zerfall kürzer."] },
+    { prompt: "Ein Gas wird von 300 K auf 450 K erwärmt. Menge und Volumen bleiben gleich. Um welchen Faktor steigt der Druck?", answer: "Er steigt um den Faktor 1,5.", wrong: ["Er sinkt auf den Faktor 2/3.", "Er verdoppelt sich.", "Er bleibt gleich, weil das Volumen gleich bleibt."] },
+    { prompt: "Ein Enzym arbeitet bei höherer Temperatur erst schneller, dann viel langsamer. Was erklärt beides?", answer: "Wärme beschleunigt die Reaktion zuerst; zu viel Wärme kann die Form des Enzyms verändern.", wrong: ["Nur die Enzymmenge ändert sich und erklärt alles.", "Die Temperatur verändert nur die Farbe des Stoffes.", "Der Abfall zeigt, dass die Reaktion Wärme abgibt."] },
+    { prompt: "Ein Modell sagt, dass eine Population immer schneller wächst. In den Messungen wird das Wachstum aber langsamer. Was sollte im Modell ergänzt werden?", answer: "Eine Grenze durch den verfügbaren Platz und die Nahrung.", wrong: ["Eine noch höhere Wachstumsrate.", "Das Weglassen aller Startwerte.", "Eine kürzere Zeitachse ohne Änderung des Modells."] },
+    { prompt: "Eine Reaktion gibt Wärme ab. Du erwärmst sie und danach entsteht weniger Produkt. Was erklärt das?", answer: "Die Reaktion verschiebt sich in die Richtung, die Wärme aufnimmt.", wrong: ["Durch Wärme stoppt jede Reaktion vollständig.", "Weniger Produkt entsteht nur, wenn man einen Katalysator entfernt.", "Die Reaktion kann keine Rückrichtung haben."] },
+    { prompt: "Ein Modell zeigt: Mehr Licht lässt die Fotosynthese unbegrenzt steigen. Was fehlt dem Modell wahrscheinlich?", answer: "Es beachtet nicht, dass andere Dinge das Wachstum begrenzen können.", wrong: ["Dass Licht Energie liefert.", "Dass Pflanzen CO₂ brauchen.", "Dass die Temperatur eine Rolle spielen kann."] },
+    { prompt: "Du änderst Licht und CO₂ gleichzeitig. Danach steigt die Fotosynthese. Warum weißt du nicht, was den Anstieg ausgelöst hat?", answer: "Du hast beide Dinge zugleich verändert und kannst ihre Wirkungen nicht trennen.", wrong: ["Weil man Fotosynthese nicht messen kann.", "Weil zwei Dinge immer denselben Effekt haben.", "Weil eine Kontrollgruppe Messwerte ungültig macht."] },
+    { prompt: "Ein 12-V-Netzteil liefert 6 A an eine Last. Welche elektrische Leistung wird umgesetzt?", answer: "72 W", wrong: ["2 W", "18 W", "144 W"] },
+    { prompt: "Drei Messungen ergeben 4,8 A, 5,0 A und 5,2 A. Wie groß ist der Durchschnitt, und wie weit liegen die Werte ungefähr davon entfernt?", answer: "Mittelwert 5,0 A; die Streuung beträgt etwa 0,2 A um den Mittelwert.", wrong: ["Mittelwert 4,8 A; Unsicherheit 0 A.", "Mittelwert 5,2 A; die Streuung ist bedeutungslos.", "Mittelwert 15 A; die Werte müssen addiert werden."] },
+    { prompt: "Ein Gas wird bei gleicher Temperatur auf ein Drittel seines Volumens gedrückt. Wie ändert sich der Druck?", answer: "Er verdreifacht sich.", wrong: ["Er sinkt auf ein Drittel.", "Er bleibt gleich.", "Er wird neunmal so groß."] },
+    { prompt: "25 ml Säure mit 0,2 mol/L sollen mit gleich starker Lauge neutralisiert werden. Wie viel Lauge brauchst du?", answer: "25 ml", wrong: ["12,5 ml", "50 ml", "100 ml"] },
+    { prompt: "Ein Modell sagt voraus, dass eine Population bis zu einer festen Grenze K wächst. Was nimmt das Modell dabei über die Umwelt an?", answer: "Platz und Nahrung bleiben langfristig gleich.", wrong: ["Lebewesen können sich nicht fortpflanzen.", "Die Population hat keine feste Grenze.", "Die Population kann nicht auf Nahrung reagieren."] },
+    { prompt: "Ein Messwert passt nicht zu dem, was dein Modell vorhersagt. Was solltest du als Nächstes tun?", answer: "Messung und Modell prüfen und den Versuch bei Bedarf wiederholen.", wrong: ["Den Messwert löschen, damit das Modell stimmt.", "Das Modell ungeprüft als exakt richtig ansehen.", "Ohne weitere Prüfung eine andere Ursache behaupten."] },
+  ],
+};
+
+function localDateKey(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function hasCompletedDailyQuiz() {
+  const [date, profile] = (localStorage.getItem(dailyQuizKey) || "").split("|");
+  return date === localDateKey() && profile === learningProfile;
+}
+
+function updateDailyQuizButton() {
+  dailyQuizButton.textContent = hasCompletedDailyQuiz() ? "Tagesquiz erledigt · nochmal spielen" : "Tagesquiz starten";
+}
+
+function getDailyQuestions() {
+  const bank = dailyQuestionBank[learningProfile];
+  const date = localDateKey().split("-").map(Number);
+  const dayNumber = Math.floor(Date.UTC(date[0], date[1] - 1, date[2]) / 86400000);
+  const dailyCount = 3;
+  const firstQuestion = (dayNumber % (bank.length / dailyCount)) * dailyCount;
+  return Array.from({ length: dailyCount }, (_, index) => {
+    const item = bank[(firstQuestion + index) % bank.length];
+    return { ...item, options: uniqueOptions(item.answer, item.wrong), experiment: "Tagesquiz" };
+  });
+}
+
+updateDailyQuizButton();
 
 const badgeDefinitions = [
   { id: "start", icon: "01", title: "Erster Treffer", text: "Beantworte eine Frage richtig." },
@@ -202,20 +309,20 @@ function createQuizQuestions(experiments) {
   const allDescriptions = quizExperiments.map((experiment) => experiment.description);
   return experiments.flatMap((experiment) => {
     const schoolQuestion = {
-      prompt: `Welche Aussage passt zu „${experiment.title}“?`,
+      prompt: `Was stimmt bei „${experiment.title}“?`,
       answer: schoolQuizFacts[experiment.id] || "Du veränderst eine Einstellung und beobachtest, was passiert.",
       options: uniqueOptions(schoolQuizFacts[experiment.id] || "Du veränderst eine Einstellung und beobachtest, was passiert.", quizExperiments.map((item) => schoolQuizFacts[item.id] || "Du veränderst eine Einstellung und beobachtest, was passiert.")),
     };
     const questions = [schoolQuestion, {
-      prompt: `Welche Beschreibung passt zu „${experiment.title}“?`,
+      prompt: `Was beschreibt „${experiment.title}“?`,
       answer: experiment.description,
       options: uniqueOptions(experiment.description, allDescriptions),
     }, {
-      prompt: `Du willst im Experiment „${experiment.title}“ den Einfluss einer Einstellung untersuchen. Wie planst du fair?`,
+      prompt: `Wie prüfst du fair, was eine Einstellung bei „${experiment.title}“ bewirkt?`,
       answer: "Nur eine Einstellung verändern und die anderen möglichst gleich lassen.",
       options: uniqueOptions("Nur eine Einstellung verändern und die anderen möglichst gleich lassen.", ["Alle Einstellungen gleichzeitig verändern.", "Nur das Bild betrachten und keine Werte vergleichen.", "Die Messung nach jeder Änderung sofort abbrechen."]),
     }, {
-      prompt: `Welche Aussage gehört zu einer sorgfältigen Auswertung von „${experiment.title}“?`,
+      prompt: `Wie wertest du die Ergebnisse zu „${experiment.title}“ sorgfältig aus?`,
       answer: "Mehrere Einstellungen vergleichen und die Grenzen des vereinfachten Modells benennen.",
       options: uniqueOptions("Mehrere Einstellungen vergleichen und die Grenzen des vereinfachten Modells benennen.", ["Ein einzelnes Ergebnis reicht immer aus.", "Messwerte sind weniger wichtig als Vermutungen.", "Das Modell bildet automatisch jede reale Situation exakt ab."]),
     }];
@@ -224,6 +331,10 @@ function createQuizQuestions(experiments) {
 }
 
 function openQuiz(subject) {
+  dailyQuizQuestionsForRun = null;
+  quizTitle.textContent = "Quiz";
+  quizExperimentList.hidden = false;
+  quizStart.textContent = "Fragen starten";
   const cards = [...document.querySelectorAll(subject === "physics" ? "#experimentCards [data-id]" : subject === "chemistry" ? "#chemistryCards [data-chem-id]" : "#biologyCards [data-bio-id]")];
   quizExperiments = cards.map((card) => ({ id: card.dataset.id || card.dataset.chemId || card.dataset.bioId, title: card.querySelector("b")?.textContent || "Experiment", description: card.querySelector("small")?.textContent || "" }));
   const subjectNames = { physics: "Physik", chemistry: "Chemie", biology: "Biologie" };
@@ -233,12 +344,36 @@ function openQuiz(subject) {
   quizQuestions.hidden = true; quizQuestions.innerHTML = ""; quizStart.hidden = false; quizCheck.hidden = true; quizResult.hidden = true; quizDialog.hidden = false;
 }
 
+function openDailyQuiz() {
+  updateDailyQuizButton();
+  dailyQuizQuestionsForRun = getDailyQuestions();
+  quizTitle.textContent = "Tagesquiz";
+  quizSubject.textContent = `Heute · ${window.labTeaching.level()}`;
+  quizIntro.textContent = hasCompletedDailyQuiz()
+    ? "Du hast die heutigen Fragen bereits gelöst. Du kannst sie zum Üben noch einmal spielen."
+    : "Drei neue Fragen passend zu deinem Lernmodus. Morgen wartet eine neue Runde.";
+  quizExperimentList.hidden = true;
+  quizQuestions.hidden = true;
+  quizQuestions.innerHTML = "";
+  quizStart.textContent = "Tagesquiz starten";
+  quizStart.hidden = false;
+  quizCheck.hidden = true;
+  quizResult.hidden = true;
+  quizDialog.hidden = false;
+}
+
+dailyQuizButton.addEventListener("click", openDailyQuiz);
 document.querySelectorAll("[data-open-quiz]").forEach((button) => button.addEventListener("click", () => openQuiz(button.dataset.openQuiz)));
 document.querySelector("#quizClose").addEventListener("click", () => { quizDialog.hidden = true; });
 document.querySelectorAll("[data-open-achievements]").forEach((button) => button.addEventListener("click", () => { renderAchievements(); achievementDialog.hidden = false; }));
 document.querySelector("#achievementClose").addEventListener("click", () => { achievementDialog.hidden = true; });
 document.querySelector("#achievementReset").addEventListener("click", () => { quizProgress = emptyQuizProgress(); saveQuizProgress(); renderAchievements(); });
 quizStart.addEventListener("click", () => {
+  if (dailyQuizQuestionsForRun) {
+    quizQuestions.innerHTML = dailyQuizQuestionsForRun.map((question, index) => `<fieldset class="quiz-question" data-answer="${question.answer.replaceAll('"', '&quot;')}"><p>${index + 1}. ${question.prompt}</p>${question.options.map((option) => `<label><input type="radio" name="quiz-${index}" value="${option.replaceAll('"', '&quot;')}" />${option}</label>`).join("")}</fieldset>`).join("");
+    quizQuestions.hidden = false; quizStart.hidden = true; quizCheck.hidden = false; quizResult.hidden = true;
+    return;
+  }
   const selectedIds = [...quizExperimentList.querySelectorAll("input:checked")].map((input) => input.value);
   const selectedExperiments = quizExperiments.filter((experiment) => selectedIds.includes(experiment.id));
   if (!selectedExperiments.length) { quizResult.textContent = "Wähle mindestens ein Experiment aus."; quizResult.hidden = false; return; }
@@ -249,8 +384,14 @@ quizStart.addEventListener("click", () => {
 quizCheck.addEventListener("click", () => {
   const questions = [...quizQuestions.querySelectorAll(".quiz-question")]; let correct = 0;
   questions.forEach((question) => { const answer = question.querySelector("input:checked")?.value; const isCorrect = answer === question.dataset.answer; question.classList.toggle("quiz-correct", isCorrect); question.classList.toggle("quiz-wrong", !isCorrect); question.querySelectorAll("label").forEach((label) => { const option = label.querySelector("input").value; label.classList.toggle("quiz-answer-correct", option === question.dataset.answer); label.classList.toggle("quiz-answer-wrong", option === answer && !isCorrect); }); if (isCorrect) correct += 1; });
-  awardQuizAchievements(correct, questions.length);
-  quizResult.textContent = `${correct} von ${questions.length} Antworten richtig. Lernmodus: ${window.labTeaching.level()}.`;
+  const isDailyQuiz = Boolean(dailyQuizQuestionsForRun);
+  const alreadyCompleted = isDailyQuiz && hasCompletedDailyQuiz();
+  if (!alreadyCompleted) awardQuizAchievements(correct, questions.length);
+  if (isDailyQuiz && !alreadyCompleted) {
+    localStorage.setItem(dailyQuizKey, `${localDateKey()}|${learningProfile}|${correct}|${questions.length}`);
+    updateDailyQuizButton();
+  }
+  quizResult.textContent = `${alreadyCompleted ? "Tagesquiz für heute bereits abgeschlossen. " : isDailyQuiz ? "Tagesquiz abgeschlossen! " : ""}${correct} von ${questions.length} Antworten richtig. Lernmodus: ${window.labTeaching.level()}.`;
   quizResult.hidden = false;
 });
 
@@ -363,7 +504,9 @@ document.querySelector("#resetButton").addEventListener("click", resetExperiment
 document.querySelectorAll("[data-mode]").forEach((button) => button.addEventListener("click", () => selectMode(button.dataset.mode)));
 document.querySelectorAll("[data-profile]").forEach((button) => button.addEventListener("click", () => {
   learningProfile = button.dataset.profile;
+  localStorage.setItem(learningProfileKey, learningProfile);
   document.querySelectorAll("[data-profile]").forEach((item) => item.classList.toggle("active", item === button));
+  updateDailyQuizButton();
 }));
 document.querySelector("#homeButton").addEventListener("click", () => {
   resetExperiment();

@@ -14,6 +14,10 @@
     ["respiration", "Zellatmung", "Biochemie", "Zellen gewinnen mit Sauerstoff Energie aus Glucose. Dabei entstehen Kohlenstoffdioxid, Wasser und ATP.", "Wie wirkt mehr Sauerstoff auf die ATP-Produktion?", [["glucose", "Glucose", .1, 5, 1.5, "mmol/L"], ["sauerstoff", "Sauerstoff", 1, 21, 12, "%"], ["temperatur", "Temperatur", 5, 42, 25, "°C"]]],
     ["population", "Populationswachstum", "Umweltwissenschaften", "Eine Population wächst zunächst schnell, wird aber durch begrenzte Nahrung und Raum an die Umweltkapazität gebunden.", "Wie verändert eine höhere Umweltkapazität das Wachstum?", [["start", "Startpopulation", 5, 200, 25, ""], ["kapazitaet", "Umweltkapazität", 100, 2000, 800, ""], ["rate", "Wachstumsrate", .05, 1, .35, "pro Tag"]]],
   ];
+  window.labExperimentCatalog = window.labExperimentCatalog || {};
+  window.labExperimentCatalog.biology = definitions.map(([id, title, category, description, challenge, controls]) => ({
+    id, title, category, description, challenge, controls: controls.map((control) => control[1])
+  }));
   const experiments = Object.fromEntries(definitions.map(([id, title, category, description, challenge, controls]) => [id, { id, title, category, description, challenge, controls }]));
   const explanations = {
     photosynthesis: "Chlorophyll nimmt Licht auf. Die Lichtreaktion liefert Energie, mit der CO₂ im Calvin-Zyklus zu Glucose gebunden wird. Sauerstoff entsteht aus Wasser.",

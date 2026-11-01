@@ -25,6 +25,17 @@
           <button class="profile-option" type="button" data-profile="expert"><b>Expert:in</b><small>Fachsprache &amp; Analysefragen</small></button>
         </div>
       </section>
+      <details class="school-topic-disclosure">
+        <summary>Schule</summary>
+        <section class="school-topic" aria-labelledby="schoolTopicTitle">
+          <div><p class="eyebrow">Für deinen Unterricht</p><h2 id="schoolTopicTitle">Dein Schulthema</h2><p>Gib ein Thema ein und finde passende Experimente aus allen Fächern.</p></div>
+          <form id="schoolTopicForm" class="school-topic-form">
+            <label for="schoolTopicInput">Thema</label>
+            <div><input id="schoolTopicInput" type="search" maxlength="120" placeholder="z. B. Stromkreis oder Fotosynthese" required /><button class="primary-button" type="submit">Experimente finden</button></div>
+          </form>
+          <div id="schoolTopicResults" class="school-topic-results" aria-live="polite"></div>
+        </section>
+      </details>
       <div class="subject-choices">
         <button class="subject-card physics-card" type="button" data-mode="physics">
           <span class="subject-symbol">F</span><span><b>Physik</b><small>Wärme & Teilchenenergie</small></span><em>→</em>
@@ -36,7 +47,7 @@
           <span class="subject-symbol">DNA</span><span><b>Biologie</b><small>Zellen, Energie & Ökosysteme</small></span><em>→</em>
         </button>
       </div>
-      <div class="protocol-home-actions"><button id="dailyQuizButton" class="daily-quiz-button" type="button">Tagesquiz starten</button><button id="protocolOpen" class="protocol-home-button" type="button">Experiment-Protokoll</button><button id="protocolListOpen" class="protocol-list-button" type="button">Alle Protokolle</button></div>
+      <div class="protocol-home-actions"><button id="dailyQuizButton" class="daily-quiz-button" type="button">Tagesquiz starten</button><button id="workbookOpen" class="workbook-open-button" type="button">Arbeitsheft öffnen</button><button id="protocolOpen" class="protocol-home-button" type="button">Experiment-Protokoll</button><button id="protocolListOpen" class="protocol-list-button" type="button">Alle Protokolle</button></div>
     </section>
 
     <section id="biologyPlatform" class="physics-platform biology-platform" hidden aria-labelledby="biologyPlatformTitle">
@@ -225,6 +236,25 @@
     </div>
   </main>
   <button id="secretGamesButton" class="secret-games-button" type="button" aria-label="Lautlose Spiele öffnen" title="Lautlose Spiele">+</button>
+  <section id="workbookDialog" class="quiz-dialog" hidden aria-labelledby="workbookTitle">
+    <div class="quiz-panel workbook-panel" role="dialog" aria-modal="true" aria-labelledby="workbookTitle">
+      <div class="quiz-header"><div><p class="eyebrow">Deine Notizen</p><h2 id="workbookTitle">Arbeitsheft</h2></div><button id="workbookClose" class="tool-button" type="button" aria-label="Arbeitsheft schließen" title="Arbeitsheft schließen">×</button></div>
+      <p class="workbook-intro">Schreibe auf, was du gelernt hast. Deine Seiten werden in diesem Browser gespeichert.</p>
+      <div class="workbook-layout">
+        <aside class="workbook-sidebar" aria-label="Seiten im Arbeitsheft">
+          <div id="workbookPages" class="workbook-pages"></div>
+          <button id="workbookNewPage" class="workbook-new-page" type="button">+ Neue Seite</button>
+        </aside>
+        <div class="workbook-editor">
+          <label for="workbookPageTitle">Seitentitel</label>
+          <input id="workbookPageTitle" maxlength="120" placeholder="Mein Thema" />
+          <label for="workbookPageNotes">Was hast du gelernt? Deine Notizen</label>
+          <textarea id="workbookPageNotes" placeholder="Hier kannst du schreiben, zeichnen mit Worten oder Ideen festhalten …"></textarea>
+          <p id="workbookStatus" class="workbook-status" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
   <section id="protocolDialog" class="quiz-dialog" hidden aria-labelledby="protocolTitle">
     <div class="quiz-panel protocol-panel" role="dialog" aria-modal="true">
       <div class="quiz-header"><div><p class="eyebrow">Dein Laborbuch</p><h2 id="protocolTitle">Experiment-Protokoll</h2></div><button id="protocolClose" class="tool-button" type="button" title="Protokolle schließen" aria-label="Protokolle schließen">×</button></div>
@@ -264,5 +294,6 @@
   <script src="biology.js"></script>
   <script type="module" src="biology-three.js"></script>
   <script src="script.js"></script>
+  <script src="school-tools.js"></script>
 </body>
 </html>

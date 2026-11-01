@@ -35,6 +35,11 @@
     ["projectile", "Projektilbewegung", "Grundlagen der Physik", "Ohne Luftwiderstand ist die Flugbahn eine Parabel. Schwerkraft wirkt konstant nach unten.", "Bei welchem Winkel ist die Reichweite maximal?", [["winkel", "Abschusswinkel", 5, 85, 45, "°"], ["tempo", "Startgeschwindigkeit", 5, 100, 45, "m/s"], ["gravitation", "Gravitation", 1, 20, 9.81, "m/s²"]]]
   ];
 
+  window.labExperimentCatalog = window.labExperimentCatalog || {};
+  window.labExperimentCatalog.physics = experimentList.map(([id, title, category, description, challenge, controls]) => ({
+    id, title, category, description, challenge, controls: controls.map((control) => control[1])
+  }));
+
   const experiments = Object.fromEntries(
     experimentList.map(([id, title, category, description, challenge, controls]) => [
       id,
@@ -1205,7 +1210,7 @@
         .join("");
 
     document
-      .querySelectorAll(".experiment-card")
+      .querySelectorAll("#experimentCards .experiment-card")
       .forEach((card) =>
         card.addEventListener(
           "click",
@@ -1214,13 +1219,13 @@
       );
 
     document
-      .querySelectorAll(".filter")
+      .querySelectorAll("#categoryFilters .filter")
       .forEach((button) =>
         button.addEventListener(
           "click",
           () => {
             document
-              .querySelectorAll(".filter")
+              .querySelectorAll("#categoryFilters .filter")
               .forEach((item) =>
                 item.classList.toggle(
                   "active",
@@ -1239,11 +1244,11 @@
 
   function filter(category, query) {
     document
-      .querySelectorAll(".experiment-card")
+      .querySelectorAll("#experimentCards .experiment-card")
       .forEach((card) => {
         const current =
           document
-            .querySelector(".filter.active")
+            .querySelector("#categoryFilters .filter.active")
             .dataset.category;
 
         card.hidden =

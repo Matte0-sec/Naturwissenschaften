@@ -15,6 +15,10 @@
     ["molecules", "Molekülgeometrie", "Grundlagen der Chemie", "Elektronenpaare stoßen sich ab. Das VSEPR-Modell sagt daraus Bindungswinkel voraus.", "Wie ändert ein freies Elektronenpaar die Geometrie?", [["bindungen", "Bindungspaare", 2, 4, 4, ""], ["freie", "Freie Elektronenpaare", 0, 2, 0, ""], ["bindung", "Bindungslänge", 40, 140, 80, "pm"]]],
     ["radioactivity", "Radioaktiver Zerfall", "Kernchemie", "Bei jedem Halbwertszeit-Intervall zerfällt die Hälfte der noch vorhandenen instabilen Kerne.", "Wie viele Kerne bleiben nach drei Halbwertszeiten?", [["kerne", "Anfangskerne", 100, 2000, 1000, ""], ["halbwert", "Halbwertszeit", 1, 60, 12, "s"], ["zeit", "Beobachtungszeit", 1, 180, 36, "s"]]],
   ];
+  window.labExperimentCatalog = window.labExperimentCatalog || {};
+  window.labExperimentCatalog.chemistry = data.map(([id, title, category, description, challenge, controls]) => ({
+    id, title, category, description, challenge, controls: controls.map((control) => control[1])
+  }));
   const experiments = Object.fromEntries(data.map(([id, title, category, description, challenge, controls]) => [id, { id, title, category, description, challenge, controls }]));
   const explanations = {
     titration: "Die Lauge neutralisiert schrittweise die Säure. Vor dem Äquivalenzpunkt ist die Lösung sauer. Am Äquivalenzpunkt sind Säure und Lauge vollständig umgesetzt; danach bestimmt die überschüssige Lauge den pH-Wert.",
